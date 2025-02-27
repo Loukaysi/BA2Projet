@@ -18,7 +18,7 @@ class GameView(arcade.View):
     coin_list: arcade.SpriteList[arcade.Sprite]
     physics_engine: arcade.PhysicsEnginePlatformer
     camera: arcade.camera.Camera2D
-    hitbox_on : bool
+    held_keys_list: list[int]
 
     def __init__(self) -> None:
         # Magical incantion: initialize the Arcade view
@@ -84,31 +84,31 @@ class GameView(arcade.View):
         # Setup de la caméra
         self.camera = arcade.camera.Camera2D()
 
-        # Désactive les hitbox par défaut
-        self.hitbox_on = False
+        # Créé la liste des touches appuyées vide
+        self.held_keys_list = []
 
         
     def on_key_press(self, key: int, modifiers: int) -> None:
         """Called when the user presses a key on the keyboard."""
+
+        # Retient que la touche a été pressée
+        self.held_keys_list.append(key)
+
         match key:
-            case arcade.key.RIGHT:
-                # start moving to the right
-                self.player_sprite.change_x = +PLAYER_MOVEMENT_SPEED
-            case arcade.key.LEFT:
-                # start moving to the left
-                self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
             case arcade.key.UP:
                 # jump by giving an initial vertical speed
                 self.player_sprite.change_y = PLAYER_JUMP_SPEED  
             case arcade.key.ESCAPE:
                 # Restart the game
                 self.setup()
-            case arcade.key.H:
-                # Active les hitbox
-                self.hitbox_on = True
+
 
     def on_key_release(self, key: int, modifiers: int) -> None:
         """Called when the user releases a key on the keyboard."""
+    
+        # Retient que la touche a été relâchée
+        self.held_keys_list.remove(key)
+
         match key:
             case arcade.key.RIGHT | arcade.key.LEFT:
                 # stop lateral movement
@@ -122,11 +122,34 @@ class GameView(arcade.View):
 
         This is where in-world time "advances", or "ticks".
         """
+
+        # Actualise les touches pressée
+        for key in self.held_keys_list:
+            match key:
+                case arcade.key.RIGHT:
+                    # start moving to the right
+                    self.player_sprite.change_x = +PLAYER_MOVEMENT_SPEED
+                case arcade.key.LEFT:
+                    # start moving to the left
+                    self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
+
         Coins_Touched_List : list[arcade.Sprite]
 
         self.physics_engine.update()
+
+        # Gère le déplacement de la caméra :
+        if self.player_sprite.position[0] - self.camera.position.x > 500:
+            self.camera.position += (PLAYER_MOVEMENT_SPEED,0)
+        elif self.player_sprite.position[0] - self.camera.position.x < -500:
+            self.camera.position -= (PLAYER_MOVEMENT_SPEED,0)
+        if self.player_sprite.position[1] - self.camera.position.y > 300:
+            self.camera.position += (0,PLAYER_MOVEMENT_SPEED)
+        elif self.player_sprite.position[1] - self.camera.position.y < -300:
+            self.camera.position -= (0,PLAYER_MOVEMENT_SPEED)
+
+        print(self.player_sprite.position[0] - self.camera.position.x)
         # Waiting for a new version of mypy with https://github.com/python/mypy/pull/18510
-        self.camera.position = self.player_sprite.position # type: ignore
+        #self.camera.position = self.player_sprite.position # type: ignore
 
         # Check for collisions with coins
         Coins_Touched_List = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
@@ -139,11 +162,15 @@ class GameView(arcade.View):
     def on_draw(self) -> None:
         """Render the screen."""
         self.clear() # always start with self.clear()
+
+        # Affiche les éléments de à l'écran
         with self.camera.activate():
             self.player_sprite_list.draw()
             self.wall_list.draw()
             self.coin_list.draw()
-            if self.hitbox_on:
+
+            # Affiche les hitbox si on appuie sur H
+            if arcade.key.H in self.held_keys_list:
                 self.player_sprite_list.draw_hit_boxes()
                 self.wall_list.draw_hit_boxes()
                 self.coin_list.draw_hit_boxes()
