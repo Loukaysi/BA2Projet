@@ -9,6 +9,9 @@
 * [x] Meilleure gestion de la caméra                                  20
 * [x] Gérer les doubles sauts                                         15
 * [x] Intégrer les sons                                               10
+* [ ] Intégrer la lecture de fichier                                  ??
+* [ ] Intégrer les blobs                                              ??
+* [ ] Intégrer la lave                                                ??
 * [ ] Effectuer les tests                                             ??
 * [ ] Mise au propre finale des documents                             ??
 * [ ] `README.md` à jour, expliquant comment jouer                    ??
@@ -29,16 +32,21 @@ Benoît : début du développement des éventuels futurs niveaux
 Inscription en binôme (Le choix de la couleur était vital)
 
 ### Semaine 2
-Découverte d'Arcade et complétition de la partie obligatoire du premier tuto (Les 2)
-Meilleures gestion du clavier (Benoît)
-Meilleure gestion de la caméra (Luca)
-Gestion du problème des doubles sauts (Benoît)
-Intégration des sons (Luca)
-Écriture des tests pour la semaine 1 (Luca)
-Mise au propre des documents administratifs (Luca)
+*Les 2 : Découverte d'Arcade et complétition de la partie obligatoire du premier tuto
+*Benoît : Meilleures gestion du clavier
+*Luca : Meilleure gestion de la caméra
+*Benoît : Gestion du problème des doubles sauts
+*Luca : Intégration des sons
+*Luca : Écriture des tests pour la semaine 1
+*Luca : Mise au propre des documents administratifs
 
 ### Semaine 3
-
+*Les 2 : Lecture du document et répartition des tâches
+*Luca : Intégration de la lecture du fichier
+*Luca : Intégration du chargement de la carte
+*Benoît : Intégration des blobs
+*Benoît : Intégration de la lave
+*Luca : Complétion des documents administratifs
 
 ### Semaine 4
 

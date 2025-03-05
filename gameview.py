@@ -160,6 +160,9 @@ class GameView(arcade.View):
         # Trouve la distance à chaque bord et déplace la caméra si besoin :
         x = self.player_sprite.position[0] - self.camera.position.x
         y = self.player_sprite.position[1] - self.camera.position.y
+        print(self.camera.viewport_right)
+        print(self.camera.viewport_left)
+        print(self.camera.viewport_width)
         if x > DISTANCE_FROM_RIGHT_CAM:
             self.camera.position += (x-DISTANCE_FROM_RIGHT_CAM,0)
         elif x < -DISTANCE_FROM_LEFT_CAM:
