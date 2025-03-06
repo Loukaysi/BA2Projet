@@ -9,7 +9,7 @@
 * [x] Meilleure gestion de la caméra                                  20
 * [x] Gérer les doubles sauts                                         15
 * [x] Intégrer les sons                                               10
-* [ ] Intégrer la lecture de fichier                                  ??
+* [x] Intégrer la lecture de fichier                                  120
 * [ ] Intégrer les blobs                                              ??
 * [ ] Intégrer la lave                                                ??
 * [ ] Effectuer les tests                                             ??
