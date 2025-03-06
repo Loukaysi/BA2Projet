@@ -47,7 +47,9 @@ Inscription en binôme (Le choix de la couleur était vital)
 * Benoît : Intégration des blobs
 * Benoît : Intégration de la lave
 * Luca : Complétion des documents administratifs
+#### à faire : 
 * Corriger la caméra (On a une valeur fixe pour la distance au bord plutôt que la taille de l'écran directement comme référence)
+* Adapter les tests
 
 ### Semaine 4
 

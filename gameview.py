@@ -1,5 +1,6 @@
 import arcade
 from map import Map
+from slime import Slime
 
 PLAYER_MOVEMENT_SPEED = 5
 #Lateral speed of the player, in pixels per frame.
@@ -26,6 +27,8 @@ class GameView(arcade.View):
     player_sprite_list: arcade.SpriteList[arcade.Sprite]
     wall_list: arcade.SpriteList[arcade.Sprite]
     coin_list: arcade.SpriteList[arcade.Sprite]
+    slime_list: arcade.SpriteList[arcade.Sprite]
+    slime_moves: list[Slime]
     physics_engine: arcade.PhysicsEnginePlatformer
     camera: arcade.camera.Camera2D
     held_keys_list: list[int]
@@ -66,6 +69,15 @@ class GameView(arcade.View):
         # Creation of coins
         self.coin_list = arcade.SpriteList(use_spatial_hash=True)
         self.coin_list.extend(self.load_elements(":resources:images/items/coinGold.png","*"))
+
+        # Creation of enemies
+        self.slime_list = arcade.SpriteList(use_spatial_hash=True)
+        self.slime_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
+        self.slime_moves = []
+        for slime in self.slime_list:
+            self.slime_moves.append(Slime(slime,1))
+            slime.velocity = (1,0)
+
 
         # Creating movement physics and collisions
         self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -175,6 +187,21 @@ class GameView(arcade.View):
         for coin in Coins_Touched_List:
             arcade.play_sound(self.Sounds["Coin"])
             coin.remove_from_sprite_lists()
+        
+        # Move the slimes
+
+        for slime in self.slime_moves:
+            # Check if the slime encountered a wall and if so, change his speed
+            if len(arcade.check_for_collision_with_list(slime.Sprite, self.wall_list)) != 0:
+                slime.Collision()
+            slime.Move()
+
+        # Check for collisions with slimes
+        Slimes_Touched_List : list[arcade.Sprite]
+        Slimes_Touched_List = arcade.check_for_collision_with_list(self.player_sprite, self.slime_list)
+
+        if len(Slimes_Touched_List) != 0:
+            self.setup()
 
 
     def on_draw(self) -> None:
@@ -186,9 +213,11 @@ class GameView(arcade.View):
             self.player_sprite_list.draw()
             self.wall_list.draw()
             self.coin_list.draw()
+            self.slime_list.draw()
             # Affiche les hitbox si on appuie sur H
             if arcade.key.H in self.held_keys_list:
                 self.player_sprite_list.draw_hit_boxes()
                 self.wall_list.draw_hit_boxes()
                 self.coin_list.draw_hit_boxes()
+                self.slime_list.draw_hit_boxes()
     
