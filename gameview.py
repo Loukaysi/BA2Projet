@@ -2,22 +2,22 @@ import arcade
 from map import Map
 
 PLAYER_MOVEMENT_SPEED = 5
-"""Lateral speed of the player, in pixels per frame."""
+#Lateral speed of the player, in pixels per frame.
 
 PLAYER_GRAVITY = 1
-"""Gravity applied to the player, in pixels per frame."""
+#Gravity applied to the player, in pixels per frame.
 
 PLAYER_JUMP_SPEED = 18
-"""Instant vertical speed for jumping, in pixels per frame."""
+#Instant vertical speed for jumping, in pixels per frame.
 
 DISTANCE_FROM_UPPER_CAM = 300
 DISTANCE_FROM_LOWER_CAM = 200
 DISTANCE_FROM_RIGHT_CAM = 550
 DISTANCE_FROM_LEFT_CAM = 550
-"""Distance minimiale entre la caméra et le joueur dans toutes les directions"""
+#Minimum distance between camera and player in all directions
 
 SPRITE_SIZE = 64
-"""Taille de chaque sprites pour la carte"""
+#Size of each sprite for the map
 
 class GameView(arcade.View):
     """Main in-game view."""
@@ -45,49 +45,49 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        # Initialise la carte
+        # Initialize the map
         self.GameMap = Map()
         self.GameMap.ReadMap("map/map1.txt")
 
-        # Création du joueur
+        # Creating player
         self.player_sprite=self.load_elements(":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png","S")[0]
         self.player_sprite_list = arcade.SpriteList()
         self.player_sprite_list.append(self.player_sprite)
 
-        # Création de la liste des murs
+        # Creating the list of walls
         self.wall_list = arcade.SpriteList(use_spatial_hash=True)
-        #Création du sol
+        # Creating of ground
         self.wall_list.extend(self.load_elements(":resources:images/tiles/grassMid.png","="))
-        #Création des boîtes
+        # Creating of box
         self.wall_list.extend(self.load_elements(":resources:images/tiles/boxCrate_double.png","x"))
-        #Création des plateformes
+        # Creation of platforms
         self.wall_list.extend(self.load_elements(":resources:images/tiles/grassHalf_mid.png","-"))
         
-        # Création des pièces
+        # Creation of coins
         self.coin_list = arcade.SpriteList(use_spatial_hash=True)
         self.coin_list.extend(self.load_elements(":resources:images/items/coinGold.png","*"))
 
-        # Création de la physique de déplacement et des collisions
+        # Creating movement physics and collisions
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player_sprite,
             walls=self.wall_list,
             gravity_constant=PLAYER_GRAVITY
         )
 
-        # Désactive les saut multiples
+        # Disables multiple jumps
         self.physics_engine.disable_multi_jump(); 
 
-        # Setup de la caméra
+        # Setup of camera
         self.camera = arcade.camera.Camera2D()
 
-        # Centre la caméra sur le joueur
+        # Centers the camera on the player
         # Waiting for a new version of mypy with https://github.com/python/mypy/pull/18510
         # self.camera.position = self.player_sprite.position # type: ignore
 
-        # Créé la liste des touches appuyées
+        # Creates the list of pressed keys
         self.held_keys_list = []
 
-        #Charge tous les sons qui devront être joués
+        # Loads all sounds that should be played
         Coincollected = arcade.load_sound(":resources:sounds/coin1.wav")
         PlayerJumped = arcade.load_sound(":resources:sounds/jump1.wav")
 
@@ -111,12 +111,12 @@ class GameView(arcade.View):
     def on_key_press(self, key: int, modifiers: int) -> None:
         """Called when the user presses a key on the keyboard."""
 
-        # Retient que la touche a été pressée
+        # Remembers that the key was pressed
         self.held_keys_list.append(key)
 
         match key:
             case arcade.key.UP:
-                # Vérifie que le joueur peut sauter
+                # Checks that the player can jump
                 if self.physics_engine.can_jump():
                     # jump by giving an initial vertical speed
                     self.player_sprite.change_y = PLAYER_JUMP_SPEED  
@@ -129,7 +129,7 @@ class GameView(arcade.View):
     def on_key_release(self, key: int, modifiers: int) -> None:
         """Called when the user releases a key on the keyboard."""
     
-        # Retient que la touche a été relâchée
+        # Remembers that the key has been released
         self.held_keys_list.remove(key)
 
         match key:
