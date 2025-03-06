@@ -32,21 +32,22 @@ Benoît : début du développement des éventuels futurs niveaux
 Inscription en binôme (Le choix de la couleur était vital)
 
 ### Semaine 2
-*Les 2 : Découverte d'Arcade et complétition de la partie obligatoire du premier tuto
-*Benoît : Meilleures gestion du clavier
-*Luca : Meilleure gestion de la caméra
-*Benoît : Gestion du problème des doubles sauts
-*Luca : Intégration des sons
-*Luca : Écriture des tests pour la semaine 1
-*Luca : Mise au propre des documents administratifs
+* Les 2 : Découverte d'Arcade et complétition de la partie obligatoire du premier tuto
+* Benoît : Meilleures gestion du clavier
+* Luca : Meilleure gestion de la caméra
+* Benoît : Gestion du problème des doubles sauts
+* Luca : Intégration des sons
+* Luca : Écriture des tests pour la semaine 1
+* Luca : Mise au propre des documents administratifs
 
 ### Semaine 3
-*Les 2 : Lecture du document et répartition des tâches
-*Luca : Intégration de la lecture du fichier
-*Luca : Intégration du chargement de la carte
-*Benoît : Intégration des blobs
-*Benoît : Intégration de la lave
-*Luca : Complétion des documents administratifs
+* Les 2 : Lecture du document et répartition des tâches
+* Luca : Intégration de la lecture du fichier
+* Luca : Intégration du chargement de la carte
+* Benoît : Intégration des blobs
+* Benoît : Intégration de la lave
+* Luca : Complétion des documents administratifs
+* Corriger la caméra (On a une valeur fixe pour la distance au bord plutôt que la taille de l'écran directement comme référence)
 
 ### Semaine 4
 

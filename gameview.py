@@ -160,9 +160,6 @@ class GameView(arcade.View):
         # Trouve la distance à chaque bord et déplace la caméra si besoin :
         x = self.player_sprite.position[0] - self.camera.position.x
         y = self.player_sprite.position[1] - self.camera.position.y
-        print(self.camera.viewport_right)
-        print(self.camera.viewport_left)
-        print(self.camera.viewport_width)
         if x > DISTANCE_FROM_RIGHT_CAM:
             self.camera.position += (x-DISTANCE_FROM_RIGHT_CAM,0)
         elif x < -DISTANCE_FROM_LEFT_CAM:
@@ -196,3 +193,45 @@ class GameView(arcade.View):
                 self.player_sprite_list.draw_hit_boxes()
                 self.wall_list.draw_hit_boxes()
                 self.coin_list.draw_hit_boxes()
+
+class Map():
+    MapString:list[str] # Storing the map disposition
+    MapConfig:dict # Storing parameters and their values
+
+    def __init__(self):
+        self.MapString = []
+        self.MapConfig = {}
+    
+    def ReadMap(self, path):
+        with open(path, "r", encoding="utf-8", newline='') as MapFile:
+            Read_Config = True # Begins the reading process by checking for parameters
+            for line in MapFile:
+                if Read_Config: # Read the parameters for the map
+                    if(line=="---\r\n"): # This detects the end of the "config part" of the file
+                        Read_Config = False
+                    else: # Store the new parameter in the "config attribute"
+                        Name = "" 
+                        Value = ""
+                        Name_complete = False
+                        for c in line:
+                            if c == ':': # Find the separator between the name and the value of the parameter
+                                Name_complete = True
+                            elif c == '\n': # Checkfor the end of the line
+                                self.MapConfig[Name] = int(Value) # Store the parameter and it's value
+                            elif Name_complete == False: # Store the name
+                                Name+=(c)
+                            elif c != ' ': # Store the value (making sure to exclude the space bewtween the ':' and the value)
+                                Value+=(c)
+
+                else: # Store the map disposition
+                    self.MapString.append(line)
+
+    
+    def ShowMap(self):
+        # Printing for debugging
+        for line in self.MapConfig:
+            print(line, end=': ')
+            print(self.MapConfig[line])
+        for line in self.MapString:
+            print(line)
+    
