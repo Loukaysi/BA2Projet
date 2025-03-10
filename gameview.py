@@ -75,8 +75,7 @@ class GameView(arcade.View):
         self.slime_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
         self.slime_moves = []
         for slime in self.slime_list:
-            self.slime_moves.append(Slime(slime,1))
-            slime.velocity = (1,0)
+            self.slime_moves.append(Slime(slime,-1))
 
 
         # Creating movement physics and collisions
@@ -189,11 +188,21 @@ class GameView(arcade.View):
             coin.remove_from_sprite_lists()
         
         # Move the slimes
-
+        Collision_Sprite:arcade.Sprite
+        Collision_Sprite = arcade.Sprite(":resources:/images/enemies/slimeBlue.png",scale=0.0001)
         for slime in self.slime_moves:
             # Check if the slime encountered a wall and if so, change his speed
             if len(arcade.check_for_collision_with_list(slime.Sprite, self.wall_list)) != 0:
                 slime.Collision()
+            # Check for ground in front
+            if slime.speed > 0:
+                Collision_Sprite.position = (slime.Sprite.right+slime.speed,slime.Sprite.bottom)
+                if len(arcade.check_for_collision_with_list(Collision_Sprite, self.wall_list)) == 0:
+                    slime.Collision()
+            else:
+                Collision_Sprite.position = (slime.Sprite.left+slime.speed,slime.Sprite.bottom)
+                if len(arcade.check_for_collision_with_list(Collision_Sprite, self.wall_list)) == 0:
+                    slime.Collision()
             slime.Move()
 
         # Check for collisions with slimes
