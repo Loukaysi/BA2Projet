@@ -62,10 +62,12 @@ class GameView(arcade.View):
         # Loads all sounds that should be played
         Coincollected = arcade.load_sound(":resources:sounds/coin1.wav")
         PlayerJumped = arcade.load_sound(":resources:sounds/jump1.wav")
+        NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
 
         self.sounds = {}
         self.sounds["Coin"]=Coincollected
         self.sounds["Jump"]=PlayerJumped
+        self.sounds["Next_level"]=NextLevel
 
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
@@ -201,6 +203,7 @@ class GameView(arcade.View):
         
         # Check for end of level
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.exit_list)) != 0:
+            arcade.play_sound(self.sounds["Next_level"])
             # Check if there is a next map
             if "next-map" in self.game_map.MapConfig:
                 self.load_map(self.game_map.MapConfig["next-map"])

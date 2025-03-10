@@ -52,6 +52,9 @@ Inscription en binôme (Le choix de la couleur était vital)
 * Adapter les tests (Test pour chaque éléments des fonctions)
 
 ### Semaine 4
+* Les slimes tournent à present, on peut charger des niveaux, il y a un score qui apparaît
+* À faire : Il faut faire l'épée, la lave et tous les tests en gros mais ça devrait aller
+* Possible : On peut voir pour faire des classes aussi mais pour l'instant à part une classe "joueur" ça me semble un peu pompeux
 
 ### Semaine 5
 
