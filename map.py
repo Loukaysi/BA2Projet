@@ -6,8 +6,8 @@ class Map():
         self.MapString = []
         self.MapConfig = {}
     
-    def ReadMap(self, path):
-        with open(path, "r", encoding="utf-8", newline='') as MapFile:
+    def ReadMap(self, chosen_map):
+        with open("map/" + chosen_map, "r", encoding="utf-8", newline='') as MapFile:
             Read_Config = True # Begins the reading process by checking for parameters
             for line in MapFile:
                 if Read_Config: # Read the parameters for the map
@@ -20,16 +20,24 @@ class Map():
                         for c in line:
                             if c == ':': # Find the separator between the name and the value of the parameter
                                 Name_complete = True
-                            elif c == '\n': # Checkfor the end of the line
-                                self.MapConfig[Name] = int(Value) # Store the parameter and it's value
+                            elif c == '\n': # Check for the end of the line
+                                if Name == "next-map":
+                                    self.MapConfig[Name] = Value[:-1] # Take away the \r at the end of the line
+                                else: 
+                                    self.MapConfig[Name] = int(Value) # Store the parameter and it's value
                             elif Name_complete == False: # Store the name
                                 Name+=(c)
                             elif c != ' ': # Store the value (making sure to exclude the space bewtween the ':' and the value)
                                 Value+=(c)
-                elif line=="---": #check for end of file
+                elif len(self.MapString) ==self.MapConfig["height"]: #check for end of file
                     pass
                 else: # Store the map disposition
-                    self.MapString.append(line)
+                    self.MapString.append([])
+                    for i in range(self.MapConfig["width"]):
+                        if i >= len(line):
+                            self.MapString[-1].append(" ")
+                        else:
+                            self.MapString[-1].append(line[i])
 
     
     def FindElement(self, element: str)-> list[tuple]:
