@@ -25,6 +25,7 @@ class GameView(arcade.View):
     player_sprite: arcade.Sprite
     player_sprite_list: arcade.SpriteList[arcade.Sprite]
     wall_list: arcade.SpriteList[arcade.Sprite]
+    no_go_list: arcade.SpriteList[arcade.Sprite]
     coin_list: arcade.SpriteList[arcade.Sprite]
     exit_list: arcade.SpriteList[arcade.Sprite]
     slime_list: arcade.SpriteList[arcade.Sprite]
@@ -62,13 +63,17 @@ class GameView(arcade.View):
         # Loads all sounds that should be played
         Coincollected = arcade.load_sound(":resources:sounds/coin1.wav")
         PlayerJumped = arcade.load_sound(":resources:sounds/jump1.wav")
+        GameOver = arcade.load_sound(":resources:sounds/gameover1.wav")
         NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
 
+        # 
         self.sounds = {}
         self.sounds["Coin"]=Coincollected
         self.sounds["Jump"]=PlayerJumped
+        self.sounds["Game_Over"]=GameOver
         self.sounds["Next_level"]=NextLevel
 
+        # 
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
 
@@ -88,18 +93,23 @@ class GameView(arcade.View):
         self.wall_list.extend(self.load_elements(":resources:images/tiles/grassMid.png","="))
         # Creating of box
         self.wall_list.extend(self.load_elements(":resources:images/tiles/boxCrate_double.png","x"))
-        # Creation of platforms
+        # Creating of platforms
         self.wall_list.extend(self.load_elements(":resources:images/tiles/grassHalf_mid.png","-"))
         
-        # Creation of coins
+        # Creating the list of no_go
+        self.no_go_list = arcade.SpriteList(use_spatial_hash=True)
+        # Creating of lava
+        self.no_go_list.extend(self.load_elements(":resources:images/tiles/lava.png","£"))
+
+        # Creating of coins
         self.coin_list = arcade.SpriteList(use_spatial_hash=True)
         self.coin_list.extend(self.load_elements(":resources:images/items/coinGold.png","*"))
 
-        # Creation of exit sign
+        # Creating of exit sign
         self.exit_list = arcade.SpriteList(use_spatial_hash=True)
         self.exit_list.extend(self.load_elements(":resources:/images/tiles/signExit.png","E"))
 
-        # Creation of enemies
+        # Creating of enemies
         self.slime_list = arcade.SpriteList(use_spatial_hash=True)
         self.slime_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
         self.slime_moves = []
@@ -200,7 +210,12 @@ class GameView(arcade.View):
             self.text_score.text = f"coins : {self.score}"
             arcade.play_sound(self.sounds["Coin"])
             coin.remove_from_sprite_lists()
-        
+
+        # Check if collision with no_go (Lava)
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.no_go_list)) != 0:
+            arcade.play_sound(self.sounds["Game_Over"])
+            self.setup()
+
         # Check for end of level
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.exit_list)) != 0:
             arcade.play_sound(self.sounds["Next_level"])
@@ -234,6 +249,8 @@ class GameView(arcade.View):
 
         # Check for collisions with slimes
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.slime_list)) != 0:
+            arcade.play_sound(self.sounds["Game_Over"])
+            # Veut-on vraiment ce son immonde ? (les 3 et 4 sons game_over sont un peu mieux)
             self.setup()
 
 
@@ -245,6 +262,7 @@ class GameView(arcade.View):
         with self.camera.activate():
             self.player_sprite_list.draw()
             self.wall_list.draw()
+            self.no_go_list.draw()
             self.coin_list.draw()
             self.exit_list.draw()
             self.slime_list.draw()
@@ -252,6 +270,7 @@ class GameView(arcade.View):
             if arcade.key.H in self.held_keys_list:
                 self.player_sprite_list.draw_hit_boxes()
                 self.wall_list.draw_hit_boxes()
+                self.no_go_list.draw_hit_boxes()
                 self.coin_list.draw_hit_boxes()
                 self.exit_list.draw_hit_boxes()
                 self.slime_list.draw_hit_boxes()
