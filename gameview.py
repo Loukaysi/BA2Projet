@@ -250,7 +250,8 @@ class GameView(arcade.View):
         # Check for collisions with slimes
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.slime_list)) != 0:
             arcade.play_sound(self.sounds["Game_Over"])
-            # Veut-on vraiment ce son immonde ? (les 3 et 4 sons game_over sont un peu mieux)
+            # Veut-on vraiment ce son immonde ? (les 3 et 4 sons game_over sont un peu mieux) 
+            # (Tu peux mettre celui que ton coeur préfère, ne te laisse pas influencer par la société)
             self.setup()
 
 
