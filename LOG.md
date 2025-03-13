@@ -10,8 +10,8 @@
 * [x] Gérer les doubles sauts                                         15
 * [x] Intégrer les sons                                               10
 * [x] Intégrer la lecture de fichier                                  120
-* [ ] Intégrer les blobs                                              ??
-* [ ] Intégrer la lave                                                ??
+* [x] Intégrer les blobs                                              30
+* [x] Intégrer la lave                                                15
 * [ ] Effectuer les tests                                             ??
 * [ ] Mise au propre finale des documents                             ??
 * [ ] `README.md` à jour, expliquant comment jouer                    ??
@@ -52,9 +52,12 @@ Inscription en binôme (Le choix de la couleur était vital)
 * Adapter les tests (Test pour chaque éléments des fonctions)
 
 ### Semaine 4
-* Les slimes tournent à present, on peut charger des niveaux, il y a un score qui apparaît
-* À faire : Il faut faire l'épée, la lave et tous les tests en gros mais ça devrait aller
-* Possible : On peut voir pour faire des classes aussi mais pour l'instant à part une classe "joueur" ça me semble un peu pompeux
+* Benoît : Création de nouvelles cartes de jeu
+* Benoît : Calcul de la rotation de l'épée
+* Luca : Chargement de cartes "suivantes"
+* Luca et Benoît : Apparation et disparition de l'épée
+* Luca : Amélioration des blobs
+* Les 2 : Documents administratifs
 
 ### Semaine 5
 

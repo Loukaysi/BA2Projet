@@ -253,7 +253,7 @@ class GameView(arcade.View):
 
         # Move the sword
         try:
-            self.sword_sprite.center_x = self.player_sprite.position[0]+18 + math.cos(45- math.pi/180*self.sword_sprite.angle)*18
+            self.sword_sprite.center_x = self.player_sprite.position[0]+10 + math.cos(45- math.pi/180*self.sword_sprite.angle)*18
             self.sword_sprite.center_y= self.player_sprite.position[1]-20 + math.sin(45-math.pi/180*self.sword_sprite.angle)*10
         except:
             pass
