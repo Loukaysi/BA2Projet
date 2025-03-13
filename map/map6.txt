@@ -1,0 +1,14 @@
+width: 23
+height: 9
+next-map: map7.txt
+---
+       xxx   xxx
+          * *
+ xxx               xxx
+
+
+      xxx     xxx
+
+  S                 E
+=======         =======
+---
