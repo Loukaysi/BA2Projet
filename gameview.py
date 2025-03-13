@@ -1,5 +1,6 @@
 import arcade
 from map import Map
+import math
 
 PLAYER_MOVEMENT_SPEED = 5
 # Lateral speed of the player, in pixels per frame.
@@ -23,6 +24,7 @@ class GameView(arcade.View):
     """Main in-game view."""
 
     player_sprite: arcade.Sprite
+    sword_sprite: arcade.Sprite
     player_sprite_list: arcade.SpriteList[arcade.Sprite]
     wall_list: arcade.SpriteList[arcade.Sprite]
     no_go_list: arcade.SpriteList[arcade.Sprite]
@@ -113,7 +115,6 @@ class GameView(arcade.View):
         # Creating of enemies
         self.slime_list = arcade.SpriteList(use_spatial_hash=True)
         self.slime_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
-        self.slime_moves = []
         for slime in self.slime_list:
             slime.change_x= -1
 
@@ -161,6 +162,20 @@ class GameView(arcade.View):
                 # Restart the game
                 self.setup()
 
+    def on_key_release(self, key: int, modifiers: int) -> None:
+        """Called when the user releases a key on the keyboard."""
+    
+        # Remembers that the key has been released
+        try:
+            self.held_keys_list.remove(key)
+        except:
+            pass
+
+        match key:
+            case arcade.key.RIGHT | arcade.key.LEFT:
+                # stop lateral movement
+                self.player_sprite.change_x = 0
+
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         """Called when the user presses a mouse button"""
 
@@ -169,24 +184,42 @@ class GameView(arcade.View):
 
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
-                # Aim the sword somehow
-                test_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png",
-                center_x= x,
-                center_y= y,
-                scale= 0.5*0.7)
-                self.wall_list.append(test_sprite)
+                # Aim the sword
+                vect_player_click_x = x + self.camera.position[0] -self.player_sprite.position[0] - self.camera.width/2
+                vect_player_click_y = y + self.camera.position[1] -self.player_sprite.position[1] - self.camera.height/2
+                sword_angle = 360/2/math.pi*math.atan2(vect_player_click_y,vect_player_click_x)
+                #self.text_score.text = f"angle:{int(sword_angle)}, \r\n calcul{int(vect_player_click_x)}, {int(vect_player_click_y)},\r\n click ecran{int(x)},{int(y)},\r\n camera pos {int(self.camera.position[0])},{int(self.camera.position[1])},\r\n joueur pos{int(self.player_sprite.position[0])},{int(self.player_sprite.position[1])}"
+                self.sword_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png",
+                                                  center_x=self.player_sprite.position[0]+20,
+                                                  center_y=self.player_sprite.position[1]-10,
+                                                  angle=45 -sword_angle,
+                                                  scale= 0.5*0.7)
+                self.player_sprite_list.append(self.sword_sprite)
 
-    def on_key_release(self, key: int, modifiers: int) -> None:
-        """Called when the user releases a key on the keyboard."""
-    
-        # Remembers that the key has been released
-        if key in self.held_keys_list:
-            self.held_keys_list.remove(key)
+                # check to kill slimes
+                Slimes_Touched_List : list[arcade.Sprite]
+                Slimes_Touched_List = arcade.check_for_collision_with_list(self.sword_sprite, self.slime_list)
+                for slime in Slimes_Touched_List:
+                    slime.kill()
 
-        match key:
-            case arcade.key.RIGHT | arcade.key.LEFT:
-                # stop lateral movement
-                self.player_sprite.change_x = 0
+                
+
+    def on_mouse_release(self, x: int, y: int, button: int, modifiers: int) -> None:
+        """Calles when the user releases a mouse button"""
+
+        # Remembers that the mouse button is released
+        try:
+            self.held_keys_list.remove(button)
+        except:
+            pass
+        
+        match button:
+            case arcade.MOUSE_BUTTON_LEFT:
+                try:
+                    self.sword_sprite.kill()
+                except:
+                    pass
+
 
     def on_update(self, delta_time: float) -> None:
         """Called once per frame, before drawing.
@@ -217,6 +250,13 @@ class GameView(arcade.View):
             self.camera.position += (0,y-DISTANCE_FROM_UPPER_CAM)
         elif y < -DISTANCE_FROM_LOWER_CAM:
             self.camera.position += (0,y+DISTANCE_FROM_LOWER_CAM)
+
+        # Move the sword
+        try:
+            self.sword_sprite.center_x = self.player_sprite.position[0]+18 + math.cos(45- math.pi/180*self.sword_sprite.angle)*18
+            self.sword_sprite.center_y= self.player_sprite.position[1]-20 + math.sin(45-math.pi/180*self.sword_sprite.angle)*10
+        except:
+            pass
 
         # Check for collisions with coins
         Coins_Touched_List : list[arcade.Sprite]
@@ -255,12 +295,9 @@ class GameView(arcade.View):
             # Check for ground in front
             if slime.change_x > 0:
                 Collision_Sprite.position = (slime.right+slime.change_x,slime.bottom)
-                if len(arcade.check_for_collision_with_list(Collision_Sprite, self.wall_list)) == 0:
-                    slime.change_x = -slime.change_x
-                    slime.texture = slime.texture.flip_horizontally()
             else:
                 Collision_Sprite.position = (slime.left+slime.change_x,slime.bottom)
-                if len(arcade.check_for_collision_with_list(Collision_Sprite, self.wall_list)) == 0:
+            if len(arcade.check_for_collision_with_list(Collision_Sprite, self.wall_list)) == 0:
                     slime.change_x = -slime.change_x
                     slime.texture = slime.texture.flip_horizontally()
             slime.strafe(slime.change_x)
