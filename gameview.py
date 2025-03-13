@@ -2,13 +2,13 @@ import arcade
 from map import Map
 import math
 
-PLAYER_MOVEMENT_SPEED = 5
+PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
 
 PLAYER_GRAVITY = 1
 # Gravity applied to the player, in pixels per frame.
 
-PLAYER_JUMP_SPEED = 18
+PLAYER_JUMP_SPEED = 21
 # Instant vertical speed for jumping, in pixels per frame.
 
 DISTANCE_FROM_UPPER_CAM = 300
@@ -53,8 +53,8 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        #self.load_map("map2.txt") changed for tests
-        self.load_test()
+        self.load_map("map7.txt")
+        #self.load_test()
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
