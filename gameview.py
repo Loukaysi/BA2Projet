@@ -2,22 +2,22 @@ import arcade
 from map import Map
 
 PLAYER_MOVEMENT_SPEED = 5
-#Lateral speed of the player, in pixels per frame.
+# Lateral speed of the player, in pixels per frame.
 
 PLAYER_GRAVITY = 1
-#Gravity applied to the player, in pixels per frame.
+# Gravity applied to the player, in pixels per frame.
 
 PLAYER_JUMP_SPEED = 18
-#Instant vertical speed for jumping, in pixels per frame.
+# Instant vertical speed for jumping, in pixels per frame.
 
 DISTANCE_FROM_UPPER_CAM = 300
 DISTANCE_FROM_LOWER_CAM = 200
 DISTANCE_FROM_RIGHT_CAM = 550
 DISTANCE_FROM_LEFT_CAM = 550
-#Minimum distance between camera and player in all directions
+# Minimum distance between camera and player in all directions
 
 SPRITE_SIZE = 64
-#Size of each sprite for the map
+# Size of each sprite for the map
 
 class GameView(arcade.View):
     """Main in-game view."""
@@ -176,7 +176,7 @@ class GameView(arcade.View):
         This is where in-world time "advances", or "ticks".
         """
 
-        # Actualise les touches pressée
+        # Refreshes pressed keys
         for key in self.held_keys_list:
             match key:
                 case arcade.key.RIGHT:
@@ -188,7 +188,7 @@ class GameView(arcade.View):
 
         self.physics_engine.update()
 
-        # Trouve la distance à chaque bord et déplace la caméra si besoin :
+        # Find the distance to each edge and move the camera if necessary
         x = self.player_sprite.position[0] - self.camera.position.x
         y = self.player_sprite.position[1] - self.camera.position.y
         if x > DISTANCE_FROM_RIGHT_CAM:
@@ -258,7 +258,7 @@ class GameView(arcade.View):
         """Render the screen."""
         self.clear() # always start with self.clear()
 
-        # Affiche les éléments à l'écran
+        # Displays items on screen
         with self.camera.activate():
             self.player_sprite_list.draw()
             self.wall_list.draw()
