@@ -51,7 +51,8 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.load_map("map2.txt")
+        #self.load_map("map2.txt") changed for tests
+        self.load_test()
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
@@ -139,7 +140,10 @@ class GameView(arcade.View):
                 scale= 0.5
             ))
         return Sprite_List
-        
+
+    def load_test(self) -> None:
+        self.load_map("test_map.txt")
+
     def on_key_press(self, key: int, modifiers: int) -> None:
         """Called when the user presses a key on the keyboard."""
 
@@ -157,6 +161,20 @@ class GameView(arcade.View):
                 # Restart the game
                 self.setup()
 
+    def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
+        """Called when the user presses a mouse button"""
+
+        # Remembers that the mouse button being held
+        self.held_keys_list.append(button)
+
+        match button:
+            case arcade.MOUSE_BUTTON_LEFT:
+                # Aim the sword somehow
+                test_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png",
+                center_x= x,
+                center_y= y,
+                scale= 0.5*0.7)
+                self.wall_list.append(test_sprite)
 
     def on_key_release(self, key: int, modifiers: int) -> None:
         """Called when the user releases a key on the keyboard."""
