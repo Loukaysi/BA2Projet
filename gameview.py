@@ -41,16 +41,16 @@ class GameView(arcade.View):
     """Main in-game view."""
 
     player_sprite: arcade.Sprite
-    weapon_sprite: arcade.Sprite
+    player_weapon:weapon.Weapon
     weapon_display_offsets: dict
     arrow_sprite_list: arcade.SpriteList[arcade.Sprite]
     player_sprite_list: arcade.SpriteList[arcade.Sprite]
-    wall_list: arcade.SpriteList[arcade.Sprite]
+    wall_sprite_list: arcade.SpriteList[arcade.Sprite]
     no_go_list: arcade.SpriteList[arcade.Sprite]
     coin_list: arcade.SpriteList[arcade.Sprite]
     exit_list: arcade.SpriteList[arcade.Sprite]
-    slime_list: arcade.SpriteList[arcade.Sprite]
-    slime_listaaa: list[Slime]
+    slime_sprite_list: arcade.SpriteList[arcade.Sprite]
+    slime_list: list[Slime]
     physics_engine: arcade.PhysicsEnginePlatformer
     camera: arcade.camera.Camera2D
     display_camera: arcade.camera.Camera2D
@@ -131,13 +131,13 @@ class GameView(arcade.View):
         self.player_sprite_list.append(self.player_sprite)
 
         # Creating the list of walls
-        self.wall_list = arcade.SpriteList(use_spatial_hash=True)
+        self.wall_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         # Creating of ground
-        self.wall_list.extend(self.load_elements(":resources:images/tiles/grassMid.png","="))
+        self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/grassMid.png","="))
         # Creating of box
-        self.wall_list.extend(self.load_elements(":resources:images/tiles/boxCrate_double.png","x"))
+        self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/boxCrate_double.png","x"))
         # Creating of platforms
-        self.wall_list.extend(self.load_elements(":resources:images/tiles/grassHalf_mid.png","-"))
+        self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/grassHalf_mid.png","-"))
         
         # Creating the list of no_go
         self.no_go_list = arcade.SpriteList(use_spatial_hash=True)
@@ -153,11 +153,11 @@ class GameView(arcade.View):
         self.exit_list.extend(self.load_elements(":resources:/images/tiles/signExit.png","E"))
 
         # Creating of enemies
-        self.slime_list = arcade.SpriteList(use_spatial_hash=True)
-        self.slime_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
-        self.slime_listaaa = []
-        for slime in self.slime_list:
-            self.slime_listaaa.append(Slime(slime))
+        self.slime_sprite_list = arcade.SpriteList(use_spatial_hash=True)
+        self.slime_sprite_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
+        self.slime_list = []
+        for slime in self.slime_sprite_list:
+            self.slime_list.append(Slime(slime))
             slime.change_x= -1
 
         # Creating of arrow list
@@ -166,7 +166,7 @@ class GameView(arcade.View):
         # Creating movement physics and collisions
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player_sprite,
-            walls=self.wall_list,
+            walls=self.wall_sprite_list,
             gravity_constant=PLAYER_GRAVITY
         )
 
@@ -230,25 +230,13 @@ class GameView(arcade.View):
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
                 # Aim the weapon
-                vect_player_click_x = x + self.camera.position[0] -self.player_sprite.position[0] - self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] - self.camera.width/2
-                vect_player_click_y = y + self.camera.position[1] -self.player_sprite.position[1] - self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] - self.camera.height/2
-                weapon_angle = math.atan2(vect_player_click_y,vect_player_click_x)
-                match self.active_weapon:
-                    case 0: # Case for the sword, using a global variable produces an error
-                        weapon = ("assets/kenney-voxel-items-png/sword_silver.png")
-                    case 1: # Bow case
-                        weapon = ("assets/kenney-voxel-items-png/bow.png")
-                self.weapon_sprite = arcade.Sprite(weapon,
-                                                  center_x=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] + math.cos(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE],
-                                                  center_y=self.player_sprite.position[1] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE],
-                                                   scale=0.5*0.7)
-                self.weapon_sprite.radians = self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle
-                self.player_sprite_list.append(self.weapon_sprite)
+                self.player_weapon = weapon.Sword(self.player_sprite.position,self.camera,(x,y))
+                self.player_sprite_list.append(self.player_weapon.weapon_sprite)
 
 
                 # check to kill slimes
                 Slimes_Touched_List : list[arcade.Sprite]
-                Slimes_Touched_List = arcade.check_for_collision_with_list(self.weapon_sprite, self.slime_list)
+                Slimes_Touched_List = arcade.check_for_collision_with_list(self.player_weapon.weapon_sprite, self.slime_sprite_list)
                 for slime in Slimes_Touched_List:
                     arcade.play_sound(self.sounds["Slime killed"])
                     slime.kill()
@@ -259,9 +247,7 @@ class GameView(arcade.View):
                     case 1: # Bow case, produces an error if the global variable is used
                         self.active_weapon = WEAPON_INDEX_SWORD
                 self.displayed_weapon_sprite.set_texture(self.active_weapon)
-                        
-
-                
+                            
 
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int) -> None:
         """Calles when the user releases a mouse button"""
@@ -275,7 +261,8 @@ class GameView(arcade.View):
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
                 try:
-                    self.weapon_sprite.kill()
+                    self.player_weapon.weapon_sprite.kill()
+                    del self.player_weapon
                 except:
                     pass
 
@@ -312,8 +299,7 @@ class GameView(arcade.View):
 
         # Move the sword
         try: 
-            self.weapon_sprite.center_x=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] + math.cos(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-self.weapon_sprite.radians)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE]
-            self.weapon_sprite.center_y=self.player_sprite.position[1] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-self.weapon_sprite.radians)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE]
+            self.player_weapon.move(self.player_sprite.position,self.camera)
         except:
             pass
 
@@ -346,17 +332,16 @@ class GameView(arcade.View):
         # Move the slimes
         Collision_Sprite:arcade.Sprite
         Collision_Sprite = arcade.Sprite(":resources:/images/enemies/slimeBlue.png",scale=0.0001)
-        print(len(self.slime_listaaa))
-        for slime in self.slime_listaaa:
-            if(slime.monster_sprite in self.slime_list):
-                slime.move(self.wall_list,collision_sprite=Collision_Sprite)
+        for slime in self.slime_list:
+            if(slime.monster_sprite in self.slime_sprite_list):
+                slime.move(self.wall_sprite_list,collision_sprite=Collision_Sprite)
             else:
-                self.slime_listaaa.remove(slime)
+                self.slime_list.remove(slime)
                 del slime
         Collision_Sprite.kill()
 
         # Check for collisions with slimes
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.slime_list)) != 0:
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.slime_sprite_list)) != 0:
             arcade.play_sound(self.sounds["Game_Over"])
             # Veut-on vraiment ce son immonde ? (les 3 et 4 sons game_over sont un peu mieux) 
             # (Tu peux mettre celui que ton coeur préfère, ne te laisse pas influencer par la société)
@@ -370,19 +355,19 @@ class GameView(arcade.View):
         # Displays items on screen
         with self.camera.activate():
             self.player_sprite_list.draw()
-            self.wall_list.draw()
+            self.wall_sprite_list.draw()
             self.no_go_list.draw()
             self.coin_list.draw()
             self.exit_list.draw()
-            self.slime_list.draw()
+            self.slime_sprite_list.draw()
             # Affiche les hitbox si on appuie sur H
             if arcade.key.H in self.held_keys_list:
                 self.player_sprite_list.draw_hit_boxes()
-                self.wall_list.draw_hit_boxes()
+                self.wall_sprite_list.draw_hit_boxes()
                 self.no_go_list.draw_hit_boxes()
                 self.coin_list.draw_hit_boxes()
                 self.exit_list.draw_hit_boxes()
-                self.slime_list.draw_hit_boxes()
+                self.slime_sprite_list.draw_hit_boxes()
 
         with self.display_camera.activate():
             self.text_score.draw()
