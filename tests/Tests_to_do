@@ -1,0 +1,34 @@
+Actuellement bon :
+- tests de caméra avec position
+- tests de colecte de pièce
+
+A faire :
+
+
+-- Semaine 1 :
+- Tout bon ?
+- Tests des sprites ?
+- Tests des déplacements de la joueuse ?
+- tests de positions du personnage
+
+
+-- Semaine 2 :
+- Chargement d'une map / suivante / fin(pas de suivante) # avec semaine 3
+tester des coordonnées précises de la map test
+- Meurt dans la lave, ... ?
+- Blobs, mort par blob, mouvements du blob au bord, changement d'orientation
+
+
+-- Semaine 3 :
+- Comportement de l'épée, apparition, position perso, attaque des blobs, ...
+- Conteur de pièce / Affichage texte à l'écran ?
+- Réaction des clics de souris ?
+- Chargement d'une map / suivante / fin(pas de suivante) # avec semaine 2
+
+
+-- Semaine 4 :
+- Apparition et position de l'arc / changement arc épée / affichage armes (coin)
+- Mouvement, apparition et disparition des flèches / Attaque de blob par flèche
+- Position chauve souris / Mouvement aléatoire ? (diff entre deux) / Attaque par flèche + épée
+
+
