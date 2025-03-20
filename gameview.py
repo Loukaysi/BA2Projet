@@ -3,6 +3,7 @@ import arcade.sprite
 from map import Map
 from monster import Slime
 from monster import Bat
+import weapon
 import math
 
 PLAYER_MOVEMENT_SPEED = 7
