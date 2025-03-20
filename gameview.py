@@ -1,6 +1,7 @@
 import arcade
 import arcade.sprite
 from map import Map
+from monster import Slime
 import math
 
 PLAYER_MOVEMENT_SPEED = 7
@@ -48,6 +49,7 @@ class GameView(arcade.View):
     coin_list: arcade.SpriteList[arcade.Sprite]
     exit_list: arcade.SpriteList[arcade.Sprite]
     slime_list: arcade.SpriteList[arcade.Sprite]
+    slime_listaaa: list[Slime]
     physics_engine: arcade.PhysicsEnginePlatformer
     camera: arcade.camera.Camera2D
     display_camera: arcade.camera.Camera2D
@@ -151,7 +153,9 @@ class GameView(arcade.View):
         # Creating of enemies
         self.slime_list = arcade.SpriteList(use_spatial_hash=True)
         self.slime_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
+        self.slime_listaaa = []
         for slime in self.slime_list:
+            self.slime_listaaa.append(Slime(slime))
             slime.change_x= -1
 
         # Creating of arrow list
@@ -234,7 +238,7 @@ class GameView(arcade.View):
                         weapon = ("assets/kenney-voxel-items-png/bow.png")
                 self.weapon_sprite = arcade.Sprite(weapon,
                                                   center_x=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] + math.cos(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE],
-                                                  center_y=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE],
+                                                  center_y=self.player_sprite.position[1] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE],
                                                    scale=0.5*0.7)
                 self.weapon_sprite.radians = self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle
                 self.player_sprite_list.append(self.weapon_sprite)
@@ -307,7 +311,7 @@ class GameView(arcade.View):
         # Move the sword
         try: 
             self.weapon_sprite.center_x=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] + math.cos(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-self.weapon_sprite.radians)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE]
-            self.weapon_sprite.center_y=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-self.weapon_sprite.radians)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE]
+            self.weapon_sprite.center_y=self.player_sprite.position[1] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-self.weapon_sprite.radians)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE]
         except:
             pass
 
@@ -340,20 +344,14 @@ class GameView(arcade.View):
         # Move the slimes
         Collision_Sprite:arcade.Sprite
         Collision_Sprite = arcade.Sprite(":resources:/images/enemies/slimeBlue.png",scale=0.0001)
-        for slime in self.slime_list:
-            # Check if the slime encountered a wall and if so, change his speed
-            if len(arcade.check_for_collision_with_list(slime, self.wall_list)) != 0:
-                slime.change_x = -slime.change_x
-                slime.texture = slime.texture.flip_horizontally()
-            # Check for ground in front
-            if slime.change_x > 0:
-                Collision_Sprite.position = (slime.right+slime.change_x,slime.bottom)
+        print(len(self.slime_listaaa))
+        for slime in self.slime_listaaa:
+            if(slime.monster_sprite in self.slime_list):
+                slime.move(self.wall_list,collision_sprite=Collision_Sprite)
             else:
-                Collision_Sprite.position = (slime.left+slime.change_x,slime.bottom)
-            if len(arcade.check_for_collision_with_list(Collision_Sprite, self.wall_list)) == 0:
-                    slime.change_x = -slime.change_x
-                    slime.texture = slime.texture.flip_horizontally()
-            slime.strafe(slime.change_x)
+                self.slime_listaaa.remove(slime)
+                del slime
+        Collision_Sprite.kill()
 
         # Check for collisions with slimes
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.slime_list)) != 0:

@@ -18,7 +18,7 @@ class Slime(Monster):
     """Deal with the slimes movements"""
 
     def __init__(self, sprite: arcade.Sprite)-> None:
-        pass
+        self.monster_sprite = sprite
 
     def move(self, walls:arcade.SpriteList[arcade.Sprite], 
              collision_sprite:arcade.Sprite=arcade.Sprite(":resources:/images/enemies/slimeBlue.png",scale=0.0001))->None:
