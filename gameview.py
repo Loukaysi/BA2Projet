@@ -1,4 +1,5 @@
 import arcade
+import arcade.sprite
 from map import Map
 import math
 
@@ -11,11 +12,25 @@ PLAYER_GRAVITY = 1
 PLAYER_JUMP_SPEED = 21
 # Instant vertical speed for jumping, in pixels per frame.
 
+ARROW_BASE_SPEED = 20
+ARROW_GRAVITY = 5
+# Constants for the arrow's trajectory
+
 DISTANCE_FROM_UPPER_CAM = 300
 DISTANCE_FROM_LOWER_CAM = 200
 DISTANCE_FROM_RIGHT_CAM = 550
 DISTANCE_FROM_LEFT_CAM = 550
 # Minimum distance between camera and player in all directions
+
+WEAPON_INDEX_SWORD = 0
+WEAPON_INDEX_BOW = 1
+# Values associated with each weapon
+
+WEAPON_OFFSET_INDEX_X = 0
+WEAPON_OFFSET_INDEX_Y = 1
+WEAPON_OFFSET_INDEX_ANGLE = 2
+WEAPON_OFFSET_INDEX_SPRITE_ANGLE = 3
+# Index for the adjustements of the sprites
 
 SPRITE_SIZE = 64
 # Size of each sprite for the map
@@ -24,7 +39,9 @@ class GameView(arcade.View):
     """Main in-game view."""
 
     player_sprite: arcade.Sprite
-    sword_sprite: arcade.Sprite
+    weapon_sprite: arcade.Sprite
+    weapon_display_offsets: dict
+    arrow_sprite_list: arcade.SpriteList[arcade.Sprite]
     player_sprite_list: arcade.SpriteList[arcade.Sprite]
     wall_list: arcade.SpriteList[arcade.Sprite]
     no_go_list: arcade.SpriteList[arcade.Sprite]
@@ -34,11 +51,14 @@ class GameView(arcade.View):
     physics_engine: arcade.PhysicsEnginePlatformer
     camera: arcade.camera.Camera2D
     display_camera: arcade.camera.Camera2D
+    displayed_weapon_sprite: arcade.Sprite
+    display_sprite_list: arcade.SpriteList[arcade.Sprite]
     held_keys_list: list[int]
     sounds: dict
     game_map: Map
     score: int
     text_score:arcade.Text
+    active_weapon: int
 
     def __init__(self) -> None:
         # Magical incantion: initialize the Arcade view
@@ -67,6 +87,7 @@ class GameView(arcade.View):
         Coincollected = arcade.load_sound(":resources:sounds/coin1.wav")
         PlayerJumped = arcade.load_sound(":resources:sounds/jump1.wav")
         GameOver = arcade.load_sound(":resources:sounds/gameover1.wav")
+        SlimeKilled = arcade.load_sound(":resources:sounds/hurt3.wav")
         NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
 
         # 
@@ -74,11 +95,26 @@ class GameView(arcade.View):
         self.sounds["Coin"]=Coincollected
         self.sounds["Jump"]=PlayerJumped
         self.sounds["Game_Over"]=GameOver
+        self.sounds["Slime killed"] = SlimeKilled
         self.sounds["Next_level"]=NextLevel
 
         # 
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
+
+        # 
+        self.weapon_display_offsets = {}
+        self.weapon_display_offsets[WEAPON_INDEX_SWORD] = [13,-22,18,math.pi/4]
+        self.weapon_display_offsets[WEAPON_INDEX_BOW] = [13,-22,0,-math.pi/4]
+        self.active_weapon = WEAPON_INDEX_SWORD
+        self.displayed_weapon_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png",
+                                                     center_x=35,
+                                                     center_y=self.camera.height - 65, 
+                                                     scale=0.6
+                                                     )
+        self.displayed_weapon_sprite.append_texture(arcade.load_texture("assets/kenney-voxel-items-png/bow.png"))
+        self.display_sprite_list = arcade.SpriteList(use_spatial_hash=True)
+        self.display_sprite_list.append(self.displayed_weapon_sprite)
 
     def load_map(self, chosen_map):
         # Initialize the map
@@ -117,6 +153,9 @@ class GameView(arcade.View):
         self.slime_list.extend(self.load_elements(":resources:/images/enemies/slimeBlue.png","o"))
         for slime in self.slime_list:
             slime.change_x= -1
+
+        # Creating of arrow list
+        self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
 
         # Creating movement physics and collisions
         self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -184,23 +223,37 @@ class GameView(arcade.View):
 
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
-                # Aim the sword
-                vect_player_click_x = x + self.camera.position[0] -self.player_sprite.position[0] - self.camera.width/2
-                vect_player_click_y = y + self.camera.position[1] -self.player_sprite.position[1] - self.camera.height/2
-                sword_angle = 360/2/math.pi*math.atan2(vect_player_click_y,vect_player_click_x)
-                #self.text_score.text = f"angle:{int(sword_angle)}, \r\n calcul{int(vect_player_click_x)}, {int(vect_player_click_y)},\r\n click ecran{int(x)},{int(y)},\r\n camera pos {int(self.camera.position[0])},{int(self.camera.position[1])},\r\n joueur pos{int(self.player_sprite.position[0])},{int(self.player_sprite.position[1])}"
-                self.sword_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png",
-                                                  center_x=self.player_sprite.position[0]+20,
-                                                  center_y=self.player_sprite.position[1]-10,
-                                                  angle=45 -sword_angle,
-                                                  scale= 0.5*0.7)
-                self.player_sprite_list.append(self.sword_sprite)
+                # Aim the weapon
+                vect_player_click_x = x + self.camera.position[0] -self.player_sprite.position[0] - self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] - self.camera.width/2
+                vect_player_click_y = y + self.camera.position[1] -self.player_sprite.position[1] - self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] - self.camera.height/2
+                weapon_angle = math.atan2(vect_player_click_y,vect_player_click_x)
+                match self.active_weapon:
+                    case 0: # Case for the sword, using a global variable produces an error
+                        weapon = ("assets/kenney-voxel-items-png/sword_silver.png")
+                    case 1: # Bow case
+                        weapon = ("assets/kenney-voxel-items-png/bow.png")
+                self.weapon_sprite = arcade.Sprite(weapon,
+                                                  center_x=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] + math.cos(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE],
+                                                  center_y=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE],
+                                                   scale=0.5*0.7)
+                self.weapon_sprite.radians = self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-weapon_angle
+                self.player_sprite_list.append(self.weapon_sprite)
+
 
                 # check to kill slimes
                 Slimes_Touched_List : list[arcade.Sprite]
-                Slimes_Touched_List = arcade.check_for_collision_with_list(self.sword_sprite, self.slime_list)
+                Slimes_Touched_List = arcade.check_for_collision_with_list(self.weapon_sprite, self.slime_list)
                 for slime in Slimes_Touched_List:
+                    arcade.play_sound(self.sounds["Slime killed"])
                     slime.kill()
+            case arcade.MOUSE_BUTTON_RIGHT:
+                match self.active_weapon:
+                    case 0: # Sword case, produces an error if the global variable is used
+                        self.active_weapon = WEAPON_INDEX_BOW
+                    case 1: # Bow case, produces an error if the global variable is used
+                        self.active_weapon = WEAPON_INDEX_SWORD
+                self.displayed_weapon_sprite.set_texture(self.active_weapon)
+                        
 
                 
 
@@ -216,7 +269,7 @@ class GameView(arcade.View):
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
                 try:
-                    self.sword_sprite.kill()
+                    self.weapon_sprite.kill()
                 except:
                     pass
 
@@ -252,9 +305,9 @@ class GameView(arcade.View):
             self.camera.position += (0,y+DISTANCE_FROM_LOWER_CAM)
 
         # Move the sword
-        try:
-            self.sword_sprite.center_x = self.player_sprite.position[0]+10 + math.cos(45- math.pi/180*self.sword_sprite.angle)*18
-            self.sword_sprite.center_y= self.player_sprite.position[1]-20 + math.sin(45-math.pi/180*self.sword_sprite.angle)*10
+        try: 
+            self.weapon_sprite.center_x=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_X] + math.cos(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-self.weapon_sprite.radians)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE]
+            self.weapon_sprite.center_y=self.player_sprite.position[0] + self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_Y] + math.sin(self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_SPRITE_ANGLE]-self.weapon_sprite.radians)*self.weapon_display_offsets[self.active_weapon][WEAPON_OFFSET_INDEX_ANGLE]
         except:
             pass
 
@@ -333,4 +386,5 @@ class GameView(arcade.View):
 
         with self.display_camera.activate():
             self.text_score.draw()
+            self.display_sprite_list.draw()
     
