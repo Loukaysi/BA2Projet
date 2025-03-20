@@ -2,6 +2,7 @@ import arcade
 import arcade.sprite
 from map import Map
 from monster import Slime
+from monster import Bat
 import math
 
 PLAYER_MOVEMENT_SPEED = 7
@@ -89,6 +90,7 @@ class GameView(arcade.View):
         Coincollected = arcade.load_sound(":resources:sounds/coin1.wav")
         PlayerJumped = arcade.load_sound(":resources:sounds/jump1.wav")
         GameOver = arcade.load_sound(":resources:sounds/gameover1.wav")
+        SlimeKilled = arcade.load_sound(":resources:sounds/hurt3.wav")
         SlimeKilled = arcade.load_sound(":resources:sounds/hurt3.wav")
         NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
 
