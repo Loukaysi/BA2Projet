@@ -2,6 +2,9 @@ from abc import abstractmethod
 import arcade
 import math
 
+ARROW_BASE_SPEED = 20
+ARROW_GRAVITY = 0.5
+
 class Weapon:
     """Every weapon type
     abstract class for the weapons
@@ -80,20 +83,19 @@ class Arrow(Weapon):
 
         super().__init__(player_position)
 
-        Vector = 20
+        Vector = ARROW_BASE_SPEED
 
         self.weapon_sprite.change_x=Vector*math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)
         self.weapon_sprite.change_y=Vector*math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)
 
-    def move(self, camera:arcade.camera.Camera2D, walls:arcade.SpriteList[arcade.Sprite])->None:
+    def move(self, camera:arcade.camera.Camera2D, walls:arcade.SpriteList[arcade.Sprite], lava:arcade.SpriteList[arcade.Sprite])->None:
         self.weapon_sprite.position = (self.weapon_sprite.position[0]+self.weapon_sprite.change_x,self.weapon_sprite.position[1]+self.weapon_sprite.change_y)
-        self.weapon_sprite.change_y-=0.5
+        self.weapon_sprite.change_y-=ARROW_GRAVITY
 
         if self.weapon_sprite.change_x!= 0:
             self.weapon_sprite.radians = self.offset_sprite_angle - math.atan2(self.weapon_sprite.change_y,self.weapon_sprite.change_x)
         else:
             self.weapon_sprite.radians = self.offset_sprite_angle
-
 
         if self.weapon_sprite.position[1] - camera.position[1] > camera.height/2:
            self.weapon_sprite.kill()
@@ -103,3 +105,6 @@ class Arrow(Weapon):
             self.weapon_sprite.kill()
             del self
 
+        elif len(arcade.check_for_collision_with_list(self.weapon_sprite,lava)):
+            self.weapon_sprite.kill()
+            del self
