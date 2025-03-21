@@ -43,26 +43,33 @@ class GameView(arcade.View):
 
     player_sprite: arcade.Sprite
     player_weapon:weapon.Weapon
-    weapon_display_offsets: dict
-    arrow_sprite_list: arcade.SpriteList[arcade.Sprite]
     player_sprite_list: arcade.SpriteList[arcade.Sprite]
-    wall_sprite_list: arcade.SpriteList[arcade.Sprite]
-    no_go_list: arcade.SpriteList[arcade.Sprite]
-    coin_list: arcade.SpriteList[arcade.Sprite]
-    exit_list: arcade.SpriteList[arcade.Sprite]
-    slime_sprite_list: arcade.SpriteList[arcade.Sprite]
-    slime_list: list[Slime]
-    physics_engine: arcade.PhysicsEnginePlatformer
+
+    arrow_sprite_list: arcade.SpriteList[arcade.Sprite]
+    arrow_list: list[weapon.Arrow]
+    active_weapon: int
+    displayed_weapon_sprite: arcade.Sprite
+
     camera: arcade.camera.Camera2D
     display_camera: arcade.camera.Camera2D
-    displayed_weapon_sprite: arcade.Sprite
     display_sprite_list: arcade.SpriteList[arcade.Sprite]
+
+    wall_sprite_list: arcade.SpriteList[arcade.Sprite]
+    no_go_sprite_list: arcade.SpriteList[arcade.Sprite]
+    coin_sprite_list: arcade.SpriteList[arcade.Sprite]
+    ext_sprite_list: arcade.SpriteList[arcade.Sprite]
+
+    slime_sprite_list: arcade.SpriteList[arcade.Sprite]
+    slime_list: list[Slime]
+
     held_keys_list: list[int]
-    sounds: dict
-    game_map: Map
+    physics_engine: arcade.PhysicsEnginePlatformer
+    
     score: int
     text_score:arcade.Text
-    active_weapon: int
+    sound_dict: dict
+    game_map: Map
+
 
     def __init__(self) -> None:
         # Magical incantion: initialize the Arcade view
@@ -80,6 +87,16 @@ class GameView(arcade.View):
         self.load_map("map7.txt")
         #self.load_test()
 
+        # Creating movement physics and collisions
+        self.physics_engine = arcade.PhysicsEnginePlatformer(
+            self.player_sprite,
+            walls=self.wall_sprite_list,
+            gravity_constant=PLAYER_GRAVITY
+        )
+
+        # Disables multiple jumps
+        self.physics_engine.disable_multi_jump(); 
+
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
         self.display_camera = arcade.camera.Camera2D()
@@ -96,28 +113,26 @@ class GameView(arcade.View):
         NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
 
         # 
-        self.sounds = {}
-        self.sounds["Coin"]=Coincollected
-        self.sounds["Jump"]=PlayerJumped
-        self.sounds["Game_Over"]=GameOver
-        self.sounds["Slime killed"] = SlimeKilled
-        self.sounds["Next_level"]=NextLevel
+        self.sound_dict = {}
+        self.sound_dict["Coin"]=Coincollected
+        self.sound_dict["Jump"]=PlayerJumped
+        self.sound_dict["Game_Over"]=GameOver
+        self.sound_dict["Slime killed"] = SlimeKilled
+        self.sound_dict["Next_level"]=NextLevel
 
         # 
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
 
+        #
+        self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
+        self.arrow_list = []
+
         # 
-        self.weapon_display_offsets = {}
-        self.weapon_display_offsets[WEAPON_INDEX_SWORD] = [13,-22,18,math.pi/4]
-        self.weapon_display_offsets[WEAPON_INDEX_BOW] = [13,-22,0,-math.pi/4]
         self.active_weapon = WEAPON_INDEX_SWORD
-        self.displayed_weapon_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png",
-                                                     center_x=35,
-                                                     center_y=self.camera.height - 65, 
-                                                     scale=0.6
-                                                     )
+        self.displayed_weapon_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png", center_x=35, center_y=self.camera.height - 65, scale=0.6)
         self.displayed_weapon_sprite.append_texture(arcade.load_texture("assets/kenney-voxel-items-png/bow.png"))
+
         self.display_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.display_sprite_list.append(self.displayed_weapon_sprite)
 
@@ -141,17 +156,17 @@ class GameView(arcade.View):
         self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/grassHalf_mid.png","-"))
         
         # Creating the list of no_go
-        self.no_go_list = arcade.SpriteList(use_spatial_hash=True)
+        self.no_go_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         # Creating of lava
-        self.no_go_list.extend(self.load_elements(":resources:images/tiles/lava.png","£"))
+        self.no_go_sprite_list.extend(self.load_elements(":resources:images/tiles/lava.png","£"))
 
         # Creating of coins
-        self.coin_list = arcade.SpriteList(use_spatial_hash=True)
-        self.coin_list.extend(self.load_elements(":resources:images/items/coinGold.png","*"))
+        self.coin_sprite_list = arcade.SpriteList(use_spatial_hash=True)
+        self.coin_sprite_list.extend(self.load_elements(":resources:images/items/coinGold.png","*"))
 
         # Creating of exit sign
-        self.exit_list = arcade.SpriteList(use_spatial_hash=True)
-        self.exit_list.extend(self.load_elements(":resources:/images/tiles/signExit.png","E"))
+        self.ext_sprite_list = arcade.SpriteList(use_spatial_hash=True)
+        self.ext_sprite_list.extend(self.load_elements(":resources:/images/tiles/signExit.png","E"))
 
         # Creating of enemies
         self.slime_sprite_list = arcade.SpriteList(use_spatial_hash=True)
@@ -160,19 +175,6 @@ class GameView(arcade.View):
         for slime in self.slime_sprite_list:
             self.slime_list.append(Slime(slime))
             slime.change_x= -1
-
-        # Creating of arrow list
-        self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
-
-        # Creating movement physics and collisions
-        self.physics_engine = arcade.PhysicsEnginePlatformer(
-            self.player_sprite,
-            walls=self.wall_sprite_list,
-            gravity_constant=PLAYER_GRAVITY
-        )
-
-        # Disables multiple jumps
-        self.physics_engine.disable_multi_jump(); 
 
 
     def load_elements(self, sprite:str,element:str) -> arcade.SpriteList:
@@ -203,7 +205,7 @@ class GameView(arcade.View):
                 if self.physics_engine.can_jump():
                     # jump by giving an initial vertical speed
                     self.player_sprite.change_y = PLAYER_JUMP_SPEED  
-                    arcade.play_sound(self.sounds["Jump"])
+                    arcade.play_sound(self.sound_dict["Jump"])
             case arcade.key.ESCAPE:
                 # Restart the game
                 self.setup()
@@ -231,16 +233,25 @@ class GameView(arcade.View):
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
                 # Aim the weapon
-                self.player_weapon = weapon.Sword(self.player_sprite.position,self.camera,(x,y))
+                match self.active_weapon:
+                    case 0: # Case for the sword, using a global variable produces an error
+                        self.player_weapon = weapon.Sword(self.player_sprite.position,self.camera,(x,y))
+                        # check to kill slimes
+                        Slimes_Touched_List : list[arcade.Sprite]
+                        Slimes_Touched_List = arcade.check_for_collision_with_list(self.player_weapon.weapon_sprite, self.slime_sprite_list)
+                        for slime in Slimes_Touched_List:
+                            arcade.play_sound(self.sound_dict["Slime killed"])
+                            slime.kill()
+                    case 1: # Case for the bow
+                        self.player_weapon = weapon.Bow(self.player_sprite.position,self.camera,(x,y))
+                        arrow = weapon.Arrow(self.player_sprite.position,self.camera,(x,y))
+                        self.arrow_list.append(arrow)
+                        self.arrow_sprite_list.append(arrow.weapon_sprite)
+                
                 self.player_sprite_list.append(self.player_weapon.weapon_sprite)
 
+                
 
-                # check to kill slimes
-                Slimes_Touched_List : list[arcade.Sprite]
-                Slimes_Touched_List = arcade.check_for_collision_with_list(self.player_weapon.weapon_sprite, self.slime_sprite_list)
-                for slime in Slimes_Touched_List:
-                    arcade.play_sound(self.sounds["Slime killed"])
-                    slime.kill()
             case arcade.MOUSE_BUTTON_RIGHT:
                 match self.active_weapon:
                     case 0: # Sword case, produces an error if the global variable is used
@@ -304,25 +315,32 @@ class GameView(arcade.View):
         except:
             pass
 
+        # move the arrows
+        for arrow in self.arrow_list:
+            arrow.move(self.camera, self.wall_sprite_list)
+            for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.slime_sprite_list):
+                enemy.kill()
+                del arrow
+
         # Check for collisions with coins
         Coins_Touched_List : list[arcade.Sprite]
-        Coins_Touched_List = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
+        Coins_Touched_List = arcade.check_for_collision_with_list(self.player_sprite, self.coin_sprite_list)
 
         # Remove touched coins and play the sound
         for coin in Coins_Touched_List:
             self.score += 1
             self.text_score.text = f"coins : {self.score}"
-            arcade.play_sound(self.sounds["Coin"])
+            arcade.play_sound(self.sound_dict["Coin"])
             coin.remove_from_sprite_lists()
 
         # Check if collision with no_go (Lava)
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.no_go_list)) != 0:
-            arcade.play_sound(self.sounds["Game_Over"])
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.no_go_sprite_list)) != 0:
+            arcade.play_sound(self.sound_dict["Game_Over"])
             self.setup()
 
         # Check for end of level
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.exit_list)) != 0:
-            arcade.play_sound(self.sounds["Next_level"])
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.ext_sprite_list)) != 0:
+            arcade.play_sound(self.sound_dict["Next_level"])
             # Check if there is a next map
             if "next-map" in self.game_map.MapConfig:
                 self.load_map(self.game_map.MapConfig["next-map"])
@@ -331,21 +349,16 @@ class GameView(arcade.View):
                 self.player_sprite.position = (self.player_sprite.position[0]+100,self.player_sprite.position[1])
 
         # Move the slimes
-        Collision_Sprite:arcade.Sprite
-        Collision_Sprite = arcade.Sprite(":resources:/images/enemies/slimeBlue.png",scale=0.0001)
         for slime in self.slime_list:
             if(slime.monster_sprite in self.slime_sprite_list):
-                slime.move(self.wall_sprite_list,collision_sprite=Collision_Sprite)
+                slime.move(self.wall_sprite_list)
             else:
                 self.slime_list.remove(slime)
                 del slime
-        Collision_Sprite.kill()
 
         # Check for collisions with slimes
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.slime_sprite_list)) != 0:
-            arcade.play_sound(self.sounds["Game_Over"])
-            # Veut-on vraiment ce son immonde ? (les 3 et 4 sons game_over sont un peu mieux) 
-            # (Tu peux mettre celui que ton coeur préfère, ne te laisse pas influencer par la société)
+            arcade.play_sound(self.sound_dict["Game_Over"])
             self.setup()
 
 
@@ -357,18 +370,20 @@ class GameView(arcade.View):
         with self.camera.activate():
             self.player_sprite_list.draw()
             self.wall_sprite_list.draw()
-            self.no_go_list.draw()
-            self.coin_list.draw()
-            self.exit_list.draw()
+            self.no_go_sprite_list.draw()
+            self.coin_sprite_list.draw()
+            self.ext_sprite_list.draw()
             self.slime_sprite_list.draw()
+            self.arrow_sprite_list.draw()
             # Affiche les hitbox si on appuie sur H
             if arcade.key.H in self.held_keys_list:
                 self.player_sprite_list.draw_hit_boxes()
                 self.wall_sprite_list.draw_hit_boxes()
-                self.no_go_list.draw_hit_boxes()
-                self.coin_list.draw_hit_boxes()
-                self.exit_list.draw_hit_boxes()
+                self.no_go_sprite_list.draw_hit_boxes()
+                self.coin_sprite_list.draw_hit_boxes()
+                self.ext_sprite_list.draw_hit_boxes()
                 self.slime_sprite_list.draw_hit_boxes()
+                self.arrow_sprite_list.draw_hit_boxes()
 
         with self.display_camera.activate():
             self.text_score.draw()

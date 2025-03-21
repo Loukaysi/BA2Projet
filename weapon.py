@@ -24,11 +24,11 @@ class Weapon:
 
 
     @abstractmethod 
-    def move(self, player_position:tuple, camera:arcade.camera.Camera2D)->None:
+    def move(self, *k)->None:
         pass
 
 class Sword(Weapon):
-    """Deal with the slimes movements"""
+    """Player's Sword"""
 
     def __init__(self, player_position:tuple, camera:arcade.camera.Camera2D, aiming_to:tuple)-> None:
         self.offset_position = (13,-22)
@@ -47,7 +47,7 @@ class Sword(Weapon):
         self.weapon_sprite.center_y=player_position[1] + self.offset_position[1] + math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle 
 
 class Bow(Weapon):
-    """Deal with the slimes movements"""
+    """Player's bow"""
 
     def __init__(self, player_position:tuple, camera:arcade.camera.Camera2D, aiming_to:tuple)-> None:
         self.offset_position = (13,-22)
@@ -55,7 +55,7 @@ class Bow(Weapon):
         self.offset_sprite_angle = -math.pi/4
         self.texture = arcade.load_texture("assets/kenney-voxel-items-png/bow.png")
 
-        vect_player_click_x = aiming_to[0] + camera.position[0] -player_position[0] - self.offset_position[0] - camera.height/2
+        vect_player_click_x = aiming_to[0] + camera.position[0] -player_position[0] - self.offset_position[0] - camera.width/2
         vect_player_click_y = aiming_to[1] + camera.position[1] -player_position[1] - self.offset_position[1] - camera.height/2
         self.aiming_position = (vect_player_click_x,vect_player_click_y)
 
@@ -63,4 +63,43 @@ class Bow(Weapon):
 
     def move(self, player_position:tuple, camera:arcade.camera.Camera2D)->None:
         self.weapon_sprite.center_x=player_position[0] + self.offset_position[0] + math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle
-        self.weapon_sprite.center_x=player_position[1] + self.offset_position[1] + math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle 
+        self.weapon_sprite.center_y=player_position[1] + self.offset_position[1] + math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle 
+
+class Arrow(Weapon):
+    """Arrows from the bow"""
+
+    def __init__(self, player_position:tuple, camera:arcade.camera.Camera2D, aiming_to:tuple)-> None:
+        self.offset_position = (13,-22)
+        self.offset_angle = 0
+        self.offset_sprite_angle = math.pi/4
+        self.texture = arcade.load_texture("assets/kenney-voxel-items-png/arrow.png")
+
+        vect_player_click_x = aiming_to[0] + camera.position[0] -player_position[0] - self.offset_position[0] - camera.width/2
+        vect_player_click_y = aiming_to[1] + camera.position[1] -player_position[1] - self.offset_position[1] - camera.height/2
+        self.aiming_position = (vect_player_click_x,vect_player_click_y)
+
+        super().__init__(player_position)
+
+        Vector = 20
+
+        self.weapon_sprite.change_x=Vector*math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)
+        self.weapon_sprite.change_y=Vector*math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)
+
+    def move(self, camera:arcade.camera.Camera2D, walls:arcade.SpriteList[arcade.Sprite])->None:
+        self.weapon_sprite.position = (self.weapon_sprite.position[0]+self.weapon_sprite.change_x,self.weapon_sprite.position[1]+self.weapon_sprite.change_y)
+        self.weapon_sprite.change_y-=0.5
+
+        if self.weapon_sprite.change_x!= 0:
+            self.weapon_sprite.radians = self.offset_sprite_angle - math.atan2(self.weapon_sprite.change_y,self.weapon_sprite.change_x)
+        else:
+            self.weapon_sprite.radians = self.offset_sprite_angle
+
+
+        if self.weapon_sprite.position[1] - camera.position[1] > camera.height/2:
+           self.weapon_sprite.kill()
+           del self
+
+        elif len(arcade.check_for_collision_with_list(self.weapon_sprite,walls)):
+            self.weapon_sprite.kill()
+            del self
+

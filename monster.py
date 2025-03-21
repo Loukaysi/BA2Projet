@@ -35,9 +35,9 @@ class Slime(Monster):
             collision_sprite.position = (self.monster_sprite.right+self.monster_sprite.change_x,self.monster_sprite.bottom)
         else:
             collision_sprite.position = (self.monster_sprite.left+self.monster_sprite.change_x,self.monster_sprite.bottom)
-            if len(arcade.check_for_collision_with_list(collision_sprite, walls)) == 0:
-                self.monster_sprite.change_x = -self.monster_sprite.change_x
-                self.monster_sprite.texture = self.monster_sprite.texture.flip_horizontally()
+        if len(arcade.check_for_collision_with_list(collision_sprite, walls)) == 0:
+            self.monster_sprite.change_x = -self.monster_sprite.change_x
+            self.monster_sprite.texture = self.monster_sprite.texture.flip_horizontally()
         self.monster_sprite.strafe(self.monster_sprite.change_x)
 
 
