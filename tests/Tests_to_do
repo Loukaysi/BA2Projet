@@ -32,3 +32,7 @@ tester des coordonnées précises de la map test
 - Position chauve souris / Mouvement aléatoire ? (diff entre deux) / Attaque par flèche + épée
 
 
+
+-- Bugs à corriger :
+- Disparrition des flèches après avoir touché un blob
+- Collision de flèche avec blob à travers un mur (à enlever)
