@@ -59,7 +59,7 @@ class GameView(arcade.View):
     
     score: int
     text_score:arcade.Text
-    sound_dict: dict
+    sound_dict: dict[str,arcade.Sound]
     game_map: Map
 
 
@@ -119,7 +119,7 @@ class GameView(arcade.View):
         self.display_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.display_sprite_list.append(self.displayed_weapon_sprite)
 
-    def load_map(self, chosen_map):
+    def load_map(self, chosen_map:str)-> None:
         # Initialize the map
         self.game_map = Map()
         self.game_map.ReadMap(chosen_map)
@@ -176,9 +176,9 @@ class GameView(arcade.View):
         self.physics_engine.disable_multi_jump(); 
 
 
-    def load_elements(self, sprite:str,element:str) -> arcade.SpriteList:
+    def load_elements(self, sprite:str,element:str) -> arcade.SpriteList[arcade.Sprite]:
         Position = self.game_map.FindElement(element)
-        Sprite_List: arcade.SpriteList
+        Sprite_List: arcade.SpriteList[arcade.Sprite]
         Sprite_List = arcade.SpriteList(use_spatial_hash=True)
         for Pos in Position:
             Sprite_List.append(arcade.Sprite(

@@ -14,7 +14,7 @@ def test_collect_coins(window: arcade.Window) -> None:
     window.show_view(view)
 
     # Make sure we have the amount of coins we expect at the start
-    assert len(view.coin_list) == INITIAL_COIN_COUNT
+    assert len(view.coin_sprite_list) == INITIAL_COIN_COUNT
 
     # Start moving right
     view.on_key_press(arcade.key.RIGHT, 0)
@@ -23,7 +23,7 @@ def test_collect_coins(window: arcade.Window) -> None:
     window.test(60)
 
     # We should have collected the first coin
-    assert len(view.coin_list) == INITIAL_COIN_COUNT - 1
+    assert len(view.coin_sprite_list) == INITIAL_COIN_COUNT - 1
 
     # Jump to get past the first crate
     view.on_key_press(arcade.key.UP, 0)
@@ -33,7 +33,7 @@ def test_collect_coins(window: arcade.Window) -> None:
     window.test(60)
 
     # We should have collected the second coin
-    assert len(view.coin_list) == INITIAL_COIN_COUNT - 2
+    assert len(view.coin_sprite_list) == INITIAL_COIN_COUNT - 2
 
 def test_camera_position(window: arcade.Window) -> None:
     # Crée la fenêtre
