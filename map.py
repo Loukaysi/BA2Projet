@@ -35,9 +35,9 @@ class Map():
                     self.MapString.append("")
                     for i in range(int(self.MapConfig["width"])):
                         if i >= len(line):
-                            self.MapString[-1].join(" ")
+                            self.MapString[-1] = self.MapString[-1] +" "
                         else:
-                            self.MapString[-1].join(line[i])
+                            self.MapString[-1] = self.MapString[-1] +line[i]
 
     
     def FindElement(self, element:str)-> list[tuple[int,int]]:
