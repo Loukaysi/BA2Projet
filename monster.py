@@ -8,9 +8,10 @@ class Monster:
     This is an abstract class to deal with all the enemies
     """
     monster_sprite: arcade.Sprite
+    initial_position: tuple[float|int,float|int]
 
     @abstractmethod
-    def move(self, *k)-> None:
+    def move(self, walls:arcade.SpriteList[arcade.Sprite])-> None:
         pass
 
     def __del__(self)->None:
@@ -44,8 +45,6 @@ class Slime(Monster):
 class Bat(Monster):
     """Deal with the bat movements"""
 
-    initial_position: tuple
-
     def __init__(self, sprite: arcade.Sprite)-> None:
         self.monster_sprite = sprite
         self.initial_position = sprite.position
@@ -60,7 +59,6 @@ class Bat(Monster):
         elif (self.monster_sprite.angle > 180) :
             self.monster_sprite.angle -= 360
         relative_angle = math.atan2(relative_bat_position_x, relative_bat_position_y) - self.monster_sprite.angle
-        print(relative_angle)
         # test if the vector size is bigger than the scope of action
         if math.sqrt(relative_bat_position_x**2 + relative_bat_position_y**2) >= 40 :
             # test if the orientation of the bat is aligned with the angle of relative vector

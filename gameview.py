@@ -59,7 +59,7 @@ class GameView(arcade.View):
     
     score: int
     text_score:arcade.Text
-    sound_dict: dict
+    sound_dict: dict[str,arcade.Sound]
     game_map: Map
 
 
@@ -76,8 +76,8 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.load_map("map7.txt")
-        #self.load_test()
+        #self.load_map("map7.txt")
+        self.load_test("base")
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
@@ -119,7 +119,7 @@ class GameView(arcade.View):
         self.display_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.display_sprite_list.append(self.displayed_weapon_sprite)
 
-    def load_map(self, chosen_map):
+    def load_map(self, chosen_map:str)-> None:
         # Initialize the map
         self.game_map = Map()
         self.game_map.ReadMap(chosen_map)
@@ -176,9 +176,9 @@ class GameView(arcade.View):
         self.physics_engine.disable_multi_jump(); 
 
 
-    def load_elements(self, sprite:str,element:str) -> arcade.SpriteList:
+    def load_elements(self, sprite:str,element:str) -> arcade.SpriteList[arcade.Sprite]:
         Position = self.game_map.FindElement(element)
-        Sprite_List: arcade.SpriteList
+        Sprite_List: arcade.SpriteList[arcade.Sprite]
         Sprite_List = arcade.SpriteList(use_spatial_hash=True)
         for Pos in Position:
             Sprite_List.append(arcade.Sprite(
@@ -189,8 +189,9 @@ class GameView(arcade.View):
             ))
         return Sprite_List
 
-    def load_test(self) -> None:
-        self.load_map("test_map.txt")
+    def load_test(self, test:str) -> None:
+        self.load_map("test_map_"+test+".txt")
+
 
     def on_key_press(self, key: int, modifiers: int) -> None:
         """Called when the user presses a key on the keyboard."""
@@ -308,15 +309,15 @@ class GameView(arcade.View):
         elif y < -DISTANCE_FROM_LOWER_CAM:
             self.camera.position += (0,y+DISTANCE_FROM_LOWER_CAM)
 
-        # Move the sword
+        # Move the weapon around
         try: 
-            self.player_weapon.move(self.player_sprite.position,self.camera)
+            self.player_weapon.move(self.player_sprite.position)
         except:
             pass
 
         # move the arrows
         for arrow in self.arrow_list:
-            arrow.move(self.camera, self.wall_sprite_list,self.no_go_sprite_list)
+            arrow.move((0,0),wall = self.wall_sprite_list,no_go =self.no_go_sprite_list)
             for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.slime_sprite_list):
                 enemy.kill()
                 del arrow
