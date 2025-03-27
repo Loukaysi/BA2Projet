@@ -62,11 +62,11 @@ class Bat(Monster):
         relative_angle = math.atan2(relative_bat_position_x, relative_bat_position_y) - self.monster_sprite.angle
         print(relative_angle)
         # test if the vector size is bigger than the scope of action
-        if math.sqrt(relative_bat_position_x**2 + relative_bat_position_y**2) >= 50 :
+        if math.sqrt(relative_bat_position_x**2 + relative_bat_position_y**2) >= 40 :
             # test if the orientation of the bat is aligned with the angle of relative vector
             # turn the direction of movement if this is right
-            if (relative_angle) <= 90 and (relative_angle) >= -90 :
-                self.monster_sprite.angle += 180
+            if (relative_angle) <= 180 and (relative_angle) >= -180 :
+                self.monster_sprite.angle += 5
         
         # Change the orientation of bat randomly with an angle between -5 and 5
         self.monster_sprite.turn_right(random.uniform(-5, 5))
