@@ -1,4 +1,4 @@
-width: a
+width: 30
 height: 7
 ---
  

@@ -15,10 +15,10 @@ PLAYER_GRAVITY = 1
 PLAYER_JUMP_SPEED = 21
 # Instant vertical speed for jumping, in pixels per frame.
 
-DISTANCE_FROM_UPPER_CAM = 150
-DISTANCE_FROM_LOWER_CAM = 150
-DISTANCE_FROM_RIGHT_CAM = 20
-DISTANCE_FROM_LEFT_CAM = 400
+DISTANCE_FROM_UPPER_CAM = 300   # Nombres
+DISTANCE_FROM_LOWER_CAM = 200   # Bizzares
+DISTANCE_FROM_RIGHT_CAM = 10    # A
+DISTANCE_FROM_LEFT_CAM = 200    # Modifier
 # Minimum distance between camera and player in all directions
 
 WEAPON_INDEX_SWORD = 0
@@ -49,8 +49,7 @@ class GameView(arcade.View):
     coin_sprite_list: arcade.SpriteList[arcade.Sprite]
     ext_sprite_list: arcade.SpriteList[arcade.Sprite]
 
-    slime_sprite_list: arcade.SpriteList[arcade.Sprite]
-    bat_sprite_list: arcade.SpriteList[arcade.Sprite]
+    monster_sprite_list: arcade.SpriteList[arcade.Sprite]
     monster_list: list[Monster]
 
     held_keys_list: list[int]
@@ -78,7 +77,7 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.load_map("map5.txt")
+        self.load_map("map2.txt")
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
@@ -95,7 +94,7 @@ class GameView(arcade.View):
         BatKilled = arcade.load_sound(":resources:sounds/hurt2.wav") # Pas le meilleur son
         NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
 
-        # Defined the sound_dict
+        # 
         self.sound_dict = {}
         self.sound_dict["Coin"]=Coincollected
         self.sound_dict["Jump"]=PlayerJumped
@@ -104,7 +103,7 @@ class GameView(arcade.View):
         self.sound_dict["Bat killed"] = BatKilled
         self.sound_dict["Next_level"]=NextLevel
 
-        # Defined and write the number of pieces
+        # 
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
         self.text_error = arcade.Text(self.error_message,x=150,y=self.camera.height/2,color=arcade.color.RED_DEVIL,font_size=50)
@@ -112,7 +111,7 @@ class GameView(arcade.View):
         self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.arrow_list = []
 
-        # Defined the active weapon
+        # 
         self.active_weapon = WEAPON_INDEX_SWORD
         self.displayed_weapon_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png", center_x=35, center_y=self.camera.height - 65, scale=0.6)
         self.displayed_weapon_sprite.append_texture(arcade.load_texture("assets/kenney-voxel-items-png/bow.png"))
@@ -120,7 +119,7 @@ class GameView(arcade.View):
         self.display_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.display_sprite_list.append(self.displayed_weapon_sprite)
 
-    def load_map(self, chosen_map:str)-> None:
+    def choose_map(self, chosen_map:str)-> None:
         # Initialize the map
         self.game_map = Map()
         if self.game_map.ReadMap(chosen_map):
@@ -130,7 +129,9 @@ class GameView(arcade.View):
             self.error_message = "Something is wrong with the map"
             self.game_map = Map()
             self.game_map.ReadMap("debug_map.txt")
-            #print(self.game_map.MapString)
+        self.Load_Map()
+
+    def Load_Map(self)->None:
         # Creating player
         self.player_sprite=self.load_elements(":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png","S")[0]
         self.player_sprite_list = arcade.SpriteList()
@@ -159,18 +160,20 @@ class GameView(arcade.View):
         self.ext_sprite_list.extend(self.load_elements(":resources:images/tiles/signExit.png","E"))
 
         # Creating of Slime ant Bat :
-        self.slime_sprite_list = arcade.SpriteList(use_spatial_hash=True)
-        self.bat_sprite_list = arcade.SpriteList(use_spatial_hash=True)
+        self.slime_sprite_list:arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
+        self.bat_sprite_list:arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(use_spatial_hash=True)
         self.slime_sprite_list.extend(self.load_elements(":resources:images/enemies/slimeBlue.png","o"))
         self.bat_sprite_list.extend(self.load_elements("assets/kenney-extended-enemies-png/bat.png","v"))
+        self.monster_sprite_list= arcade.SpriteList(use_spatial_hash=True)
         self.monster_list = []
-        
+
         for slime in self.slime_sprite_list:
             self.monster_list.append(Slime(slime))
             slime.change_x= -1
+            self.monster_sprite_list.append(slime)
         for bat in self.bat_sprite_list:
             self.monster_list.append(Bat(bat))
-            bat.change_x= -1
+            self.monster_sprite_list.append(bat)
 
         # Creating movement physics and collisions
         self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -190,8 +193,8 @@ class GameView(arcade.View):
         for Pos in Position:
             Sprite_List.append(arcade.Sprite(
                 sprite,
-                center_x= 32+Pos[1]*64,
-                center_y= 32+Pos[0]*64,
+                center_x= SPRITE_SIZE/2+Pos[1]*SPRITE_SIZE,
+                center_y= SPRITE_SIZE/2+Pos[0]*SPRITE_SIZE,
                 scale= 0.5
             ))
         return Sprite_List
@@ -239,10 +242,10 @@ class GameView(arcade.View):
                 match self.active_weapon:
                     case 0: # Case for the sword, using a global variable produces an error
                         self.player_weapon = weapon.Sword(self.player_sprite.position,self.camera,(x,y))
-                        # check to kill slimes
-                        Slimes_Touched_List : list[arcade.Sprite]
-                        Slimes_Touched_List = arcade.check_for_collision_with_list(self.player_weapon.weapon_sprite, self.slime_sprite_list)
-                        for slime in Slimes_Touched_List:
+                        # check to kill monsters
+                        Monster_Touched : list[arcade.Sprite]
+                        Monster_Touched = arcade.check_for_collision_with_list(self.player_weapon.weapon_sprite, self.monster_sprite_list)
+                        for slime in Monster_Touched:
                             arcade.play_sound(self.sound_dict["Slime killed"])
                             slime.kill()
                     case 1: # Case for the bow
@@ -322,11 +325,7 @@ class GameView(arcade.View):
         for arrow in self.arrow_list:
             arrow.move((0,0),wall = self.wall_sprite_list,no_go =self.no_go_sprite_list)
             try:
-                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.slime_sprite_list):
-                    enemy.kill()
-                    arrow.weapon_sprite.kill()
-                    del arrow
-                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.bat_sprite_list):
+                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.monster_sprite_list):
                     enemy.kill()
                     arrow.weapon_sprite.kill()
                     del arrow
@@ -354,31 +353,23 @@ class GameView(arcade.View):
             arcade.play_sound(self.sound_dict["Next_level"])
             # Check if there is a next map
             if "next-map" in self.game_map.MapConfig:
-                self.load_map(self.game_map.MapConfig["next-map"])
+                self.choose_map(self.game_map.MapConfig["next-map"])
             else:
                 # Intended : if there is no next map, the player is moved forward, used for debugging purposes
                 self.player_sprite.position = (self.player_sprite.position[0]+100,self.player_sprite.position[1])
 
         # Move the monsters
         for monster in self.monster_list:
-            if(monster.monster_sprite in self.slime_sprite_list):
-                monster.move(self.wall_sprite_list)
-            elif(monster.monster_sprite in self.bat_sprite_list):
+            if(monster.monster_sprite in self.monster_sprite_list):
                 monster.move(self.wall_sprite_list)
             else:
                 self.monster_list.remove(monster)
                 del monster
 
         # Check for collisions with slime
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.slime_sprite_list)) != 0:
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.monster_sprite_list)) != 0:
             arcade.play_sound(self.sound_dict["Game_Over"])
             self.setup()
-
-        # Check for collisions with bat
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.bat_sprite_list)) != 0:
-            arcade.play_sound(self.sound_dict["Game_Over"])
-            self.setup()
-
 
     def on_draw(self) -> None:
         """Render the screen."""
@@ -391,8 +382,7 @@ class GameView(arcade.View):
             self.no_go_sprite_list.draw()
             self.coin_sprite_list.draw()
             self.ext_sprite_list.draw()
-            self.slime_sprite_list.draw()
-            self.bat_sprite_list.draw()
+            self.monster_sprite_list.draw()
             self.arrow_sprite_list.draw()
             # Affiche les hitbox si on appuie sur H
             if arcade.key.H in self.held_keys_list:
@@ -401,8 +391,7 @@ class GameView(arcade.View):
                 self.no_go_sprite_list.draw_hit_boxes()
                 self.coin_sprite_list.draw_hit_boxes()
                 self.ext_sprite_list.draw_hit_boxes()
-                self.slime_sprite_list.draw_hit_boxes()
-                self.bat_sprite_list.draw_hit_boxes()
+                self.monster_sprite_list.draw_hit_boxes()
                 self.arrow_sprite_list.draw_hit_boxes()
 
         with self.display_camera.activate():
