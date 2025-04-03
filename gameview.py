@@ -318,12 +318,17 @@ class GameView(arcade.View):
         # move the arrows
         for arrow in self.arrow_list:
             arrow.move((0,0),wall = self.wall_sprite_list,no_go =self.no_go_sprite_list)
-            for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.slime_sprite_list):
-                enemy.kill()
-                del arrow
-            for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.bat_sprite_list):
-                enemy.kill()
-                del arrow
+            try:
+                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.slime_sprite_list):
+                    enemy.kill()
+                    arrow.weapon_sprite.kill()
+                    del arrow
+                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.bat_sprite_list):
+                    enemy.kill()
+                    arrow.weapon_sprite.kill()
+                    del arrow
+            except:
+                pass
 
         # Check for collisions with coins
         Coins_Touched_List : list[arcade.Sprite]
