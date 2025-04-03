@@ -105,6 +105,9 @@ class Arrow(Weapon):
 
         else:
             for wall in walls:
-                if len(arcade.check_for_collision_with_list(self.weapon_sprite,walls[wall])):
-                    self.weapon_sprite.kill()
-                    del self
+                try:
+                    if len(arcade.check_for_collision_with_list(self.weapon_sprite,walls[wall])):
+                        self.weapon_sprite.kill()
+                        del self
+                except:
+                    pass

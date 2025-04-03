@@ -1,0 +1,10 @@
+width: 8
+height: 5
+next-map: map1.txt
+---
+x      x
+x      x
+x  S   x
+x      x
+========
+---
