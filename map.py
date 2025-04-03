@@ -55,7 +55,7 @@ class Map():
         for LineChecked in range(len(self.MapString)):
             for CharacterChecked in range(len(self.MapString[LineChecked])):
                 if(self.MapString[LineChecked][CharacterChecked]== element):
-                    Position.append((len(self.MapString) - LineChecked, CharacterChecked))
+                    Position.append((len(self.MapString) - 1 - LineChecked, CharacterChecked))
 
         return Position
 

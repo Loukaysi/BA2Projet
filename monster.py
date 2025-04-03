@@ -3,6 +3,8 @@ import arcade
 import math
 import random
 
+BAT_CIRCLE_SCOPE = 40
+
 class Monster:
     """All kind of enemies in the game
     This is an abstract class to deal with all the enemies
@@ -58,7 +60,7 @@ class Bat(Monster):
         relative_angle = math.atan2(relative_bat_position_x, relative_bat_position_y) - move_angle
 
         # test if the vector size is bigger than the scope of action
-        if math.sqrt(relative_bat_position_x**2 + relative_bat_position_y**2) >= 40 :
+        if math.sqrt(relative_bat_position_x**2 + relative_bat_position_y**2) >= BAT_CIRCLE_SCOPE :
             # test if the relative_angle is aligned with the angle of relative vector
             # turn the direction of movement if this is right
             move_angle += 3

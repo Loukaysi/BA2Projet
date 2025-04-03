@@ -18,7 +18,7 @@ def create_window() -> arcade.Window:
     global WINDOW
     if not WINDOW:
         WINDOW = arcade.Window(
-            width=800, height=600, title="Testing", antialiasing=False
+            width=1280, height=720, title="Testing", antialiasing=False
         )
     return WINDOW
 
@@ -28,7 +28,7 @@ def prepare_window(window: arcade.Window, caption: str) -> None:
         raise RuntimeError("Please do not close the global test window :D")
 
     window.switch_to()
-    window.set_size(800, 600)
+    window.set_size(1280, 720)
     window.set_caption(caption)
 
     ctx = window.ctx

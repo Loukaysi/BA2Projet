@@ -145,10 +145,10 @@ def test_find_element() -> None:
             "---\r",
             "----------\r",
             "----------\r",
-            "--- ------\r",
             "----------\r",
             "----------\r",
-            "----b-----\r",
+            "----------\r",
+            "----v-----\r",
             "----S-----\r",
             "x---x-----\r",
             "=---=----o\r",
@@ -162,4 +162,8 @@ def test_find_element() -> None:
     finally:
         os.remove(test_file_name)
 
-    #assert(test_map.FindElement("=")==[(0,0),(0,4),(1,0),(1,4)])
+    assert(test_map.FindElement("=")==[(1,0),(1,4),(0,0),(0,4)])
+    assert(test_map.FindElement("x")==[(2,0),(2,4)])
+    assert(test_map.FindElement("o")==[(1,9),(0,9)])
+    assert(test_map.FindElement("S")==[(3,4)])
+    assert(test_map.FindElement("v")==[(4,4)])
