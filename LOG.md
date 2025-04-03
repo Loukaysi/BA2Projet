@@ -2,27 +2,35 @@
 
 ## Progression
 
-* [x] Créer le LOG.md                                                 1
-* [x] S'inscrire en binôme                                            10
-* [x] Découverte d'Arcade et premier tuto                             75
-* [x] Meilleure gestion du clavier                                    10
-* [x] Meilleure gestion de la caméra                                  20
-* [x] Gérer les doubles sauts                                         15
-* [x] Intégrer les sons                                               10
-* [x] Intégrer la lecture de fichier                                  120
-* [x] Intégrer les blobs                                              30
-* [x] Intégrer la lave                                                15
-* [ ] Effectuer les tests                                             ??
-* [ ] Mise au propre finale des documents                             ??
-* [ ] `README.md` à jour, expliquant comment jouer                    ??
+* [x] 1. Créer le LOG.md + Inscription binôme + Découverte arcade      30
+* [x] 2. Meilleure gestion du clavier et de la caméra                  30
+* [x] 2. Intégrer les sons                                             10
+* [x] 3. Intégrer la lecture de fichier                                120 [ ] + Tests 40
+* [x] 3. Intégrer la lave                                              15  [ ] + Tests 5
+* [x] 3. Design de premiers niveaux                                    30
+* [x] 4. Intégrer les blobs + Améliorations                            50  [ ] + Tests 20
+* [x] 4. Intégrer l'épée                                               40  [ ] + Tests 
+* [x] 5. Modifier système monstres et armes avec classe abstract       15
+* [x] 5. Intégrer les chauves-souris avec mouvement pseudo-aléatoire   45  [ ] + Tests 20
+* [x] 5. Intégrer l'arc avec flèche                                    60  [ ] + Tests 20
+* [x] 6. Refactoring noms et types de variables                        30
+* [x] 6. Avancement de création de niveaux                             30
+* [ ] 7. 
+* [ ] 7. 
+* [ ] 8. 
+* [ ] 8. 
+...
+* [x] Fin. Mise au propre des documents                                ??
+* [ ] Fin. `README.md` à jour, expliquant comment jouer                ??
+
 
 ---
 
 ## À faire (prochaine étape)
 
-Luca et Benoît :Découverte du tutoriel hebdomadaire 
-Luca : intégration des images et sons personnalisés
-Benoît : début du développement des éventuels futurs niveaux
+* [x] Luca et Benoît :Découverte du tutoriel hebdomadaire 
+* [x] Luca : intégration des images et sons personnalisés
+* [x] Benoît : début du développement des éventuels futurs niveaux
 
 ---
 
@@ -47,25 +55,36 @@ Inscription en binôme (Le choix de la couleur était vital)
 * Benoît : Intégration des blobs
 * Benoît : Intégration de la lave
 * Luca : Complétion des documents administratifs
-#### à faire : 
-* Corriger la caméra (On a une valeur fixe pour la distance au bord plutôt que la taille de l'écran directement comme référence)
-* Adapter les tests (Test pour chaque éléments des fonctions)
 
 ### Semaine 4
 * Benoît : Création de nouvelles cartes de jeu
 * Benoît : Calcul de la rotation de l'épée
 * Luca : Chargement de cartes "suivantes"
-* Luca et Benoît : Apparation et disparition de l'épée
 * Luca : Amélioration des blobs
+* Les 2 : Apparation et disparition de l'épée
 * Les 2 : Documents administratifs
 
 ### Semaine 5
+* Luca : Apparition et disparition de l'arc avec les flèches
+* Luca : Système adaptatif du type d'arme (classe abstraite + sous-classes)
+* Benoît : Création des chauves-souris avec système pseudo aléatoire de déplacement
+* Benoît : Système adaptatif du type de monstres (classe abstraite + sous-classes)
+* Les 2 : Documents administratifs
 
 ### Semaine 6
+* Luca : Refactoring noms et types de variables
+* Luca : Test lecture de fichier
+* Benoît : Fin mouvements chauves-souris
+* Benoît : Création de nouveaux niveaux
+* Benoît : Documents administratifs
 
 ### Semaine 7
+* Luca : Tests ...
+* Benoît : Tests ...
+* Les deux : Documents administratifs
 
 ### Semaine 8
+
 
 ### Semaine 9
 

@@ -12,27 +12,54 @@ A faire :
 - tests de positions du personnage
 
 
--- Semaine 2 :
+-- Semaine 3 :
 - Chargement d'une map / suivante / fin(pas de suivante) # avec semaine 3
 tester des coordonnées précises de la map test
 - Meurt dans la lave, ... ?
 - Blobs, mort par blob, mouvements du blob au bord, changement d'orientation
 
 
--- Semaine 3 :
+-- Semaine 4 :
 - Comportement de l'épée, apparition, position perso, attaque des blobs, ...
 - Conteur de pièce / Affichage texte à l'écran ?
 - Réaction des clics de souris ?
 - Chargement d'une map / suivante / fin(pas de suivante) # avec semaine 2
 
 
--- Semaine 4 :
+-- Semaine 5 :
 - Apparition et position de l'arc / changement arc épée / affichage armes (coin)
 - Mouvement, apparition et disparition des flèches / Attaque de blob par flèche
 - Position chauve souris / Mouvement aléatoire ? (diff entre deux) / Attaque par flèche + épée
 
 
+-- Semaine 6 et 7 :
+- Rien de nouveau sous le soleil !
 
 -- Bugs à corriger :
-- Disparrition des flèches après avoir touché un blob
-- Collision de flèche avec blob à travers un mur (à enlever)
+- Le style est incroyable, donc rien à dire !
+
+
+Structure des tests :
+Un fichier test par fichier python ;
+
+- Map =>        Test de comment on gère la map ;
+                Crée le niveau avec le fichier ;
+                Envoie la suivante ;
+                Quant il y en a pas ; ...
+
+- Main =>       J'ai pas trop capté ; ...
+
+
+- Gameview =>   Sprites ? ;
+                Pièces ;
+                Mouvements de la joueuse ; ...
+
+- Weapon =>     Test l'épée ;
+                Le changement d'arme ;
+                L'arc ; ...
+
+- Monster =>    Test des blobs ;
+                Test des chauves-souris ;
+                L'arc ; ...
+
+- ...

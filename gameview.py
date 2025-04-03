@@ -5,7 +5,6 @@ from monster import Monster
 from monster import Slime
 from monster import Bat
 import weapon
-import math
 
 PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
@@ -16,10 +15,10 @@ PLAYER_GRAVITY = 1
 PLAYER_JUMP_SPEED = 21
 # Instant vertical speed for jumping, in pixels per frame.
 
-DISTANCE_FROM_UPPER_CAM = 300   # Nombres
-DISTANCE_FROM_LOWER_CAM = 200   # Bizzares
-DISTANCE_FROM_RIGHT_CAM = 10    # A
-DISTANCE_FROM_LEFT_CAM = 200    # Modifier
+DISTANCE_FROM_UPPER_CAM = 150
+DISTANCE_FROM_LOWER_CAM = 150
+DISTANCE_FROM_RIGHT_CAM = 20
+DISTANCE_FROM_LEFT_CAM = 400
 # Minimum distance between camera and player in all directions
 
 WEAPON_INDEX_SWORD = 0
@@ -76,8 +75,8 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        #self.load_map("map7.txt")
-        self.load_test("base")
+        self.load_map("map3.txt")
+        #self.load_test("base")
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
@@ -94,7 +93,7 @@ class GameView(arcade.View):
         BatKilled = arcade.load_sound(":resources:sounds/hurt2.wav") # Pas le meilleur son
         NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
 
-        # 
+        # Defined the sound_dict
         self.sound_dict = {}
         self.sound_dict["Coin"]=Coincollected
         self.sound_dict["Jump"]=PlayerJumped
@@ -103,15 +102,15 @@ class GameView(arcade.View):
         self.sound_dict["Bat killed"] = BatKilled
         self.sound_dict["Next_level"]=NextLevel
 
-        # 
+        # Defined and write the number of pieces
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
 
-        #
+        # Defined the arrow list
         self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.arrow_list = []
 
-        # 
+        # Defined the active weapon
         self.active_weapon = WEAPON_INDEX_SWORD
         self.displayed_weapon_sprite = arcade.Sprite("assets/kenney-voxel-items-png/sword_silver.png", center_x=35, center_y=self.camera.height - 65, scale=0.6)
         self.displayed_weapon_sprite.append_texture(arcade.load_texture("assets/kenney-voxel-items-png/bow.png"))

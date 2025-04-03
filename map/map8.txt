@@ -1,7 +1,9 @@
 width: 29
 height: 7
-next-map: map7.txt
+next-map: map8.txt
 ---
+          v     v
+
         x         x
              x
   S                       E

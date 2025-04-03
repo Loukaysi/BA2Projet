@@ -30,7 +30,7 @@ Nous avons créé une classe "Map" qui se charge de la lecture des fichiers, not
 Pour l'instant, la joueuse est déplacée vers la droite de quelques pixels mais, à long temre, ceci peut-être changé sans problèmes car c'est une situation que nous détectons.
 
 ## Semaine 5 :
-...
+... A remplir la semaine 7
 
 ## Semaine 6:
 ...
