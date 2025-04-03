@@ -1,3 +1,5 @@
+from typing import TextIO
+
 class Map():
     MapString:list[str] # Storing the map disposition
     MapConfig:dict[str,str] # Storing parameters and their values
@@ -5,13 +7,13 @@ class Map():
     def __init__(self) -> None:
         self.MapString = []
         self.MapConfig = {}
-    
-    def ReadMap(self, chosen_map:str) -> None:
-        with open("map/" + chosen_map, "r", encoding="utf-8", newline='') as MapFile:
+
+    def ReadFile(self, MapFile: TextIO)->bool:
+        try:
             Read_Config = True # Begins the reading process by checking for parameters
             for line in MapFile:
                 if Read_Config: # Read the parameters for the map
-                    if(line=="---\r\n"): # This detects the end of the "config part" of the file
+                    if(line[:3]=="---"): # This detects the end of the "config part" of the file
                         Read_Config = False
                     else: # Store the new parameter in the "config attribute"
                         Name = "" 
@@ -21,23 +23,30 @@ class Map():
                             if c == ':': # Find the separator between the name and the value of the parameter
                                 Name_complete = True
                             elif c == '\n': # Check for the end of the line
-                                if Name == "next-map":
-                                    self.MapConfig[Name] = Value[:-1] # Take away the \r at the end of the line
-                                else: 
-                                    self.MapConfig[Name] = Value[:-1] # Store the parameter and it's value
+                                if Value[-1]== "\r":
+                                    Value = Value[:-1]
+                                self.MapConfig[Name] = Value # Take away the \r at the end of the line
                             elif Name_complete == False: # Store the name
                                 Name+=(c)
                             elif c != ' ': # Store the value (making sure to exclude the space bewtween the ':' and the value)
                                 Value+=(c)
-                elif len(self.MapString) ==int(self.MapConfig["height"]): #check for end of file
-                    pass
-                else: # Store the map disposition
+                elif len(self.MapString) < int(self.MapConfig["height"]): #check for end of file
                     self.MapString.append("")
                     for i in range(int(self.MapConfig["width"])):
                         if i >= len(line):
-                            self.MapString[-1] = self.MapString[-1] +" "
+                            self.MapString[-1] = self.MapString[-1] + " "
+                        elif line[i]=="\n"or line[i]=="\r":
+                            self.MapString[-1] = self.MapString[-1] + " "
                         else:
-                            self.MapString[-1] = self.MapString[-1] +line[i]
+                            self.MapString[-1] = self.MapString[-1] + line[i]
+            return True
+        except:
+            return False
+
+    def ReadMap(self, chosen_map:str) -> bool:
+        with open("map/" + chosen_map, "r", encoding="utf-8", newline='') as MapFile:
+            return self.ReadFile(MapFile)
+            
 
     
     def FindElement(self, element:str)-> list[tuple[int,int]]:

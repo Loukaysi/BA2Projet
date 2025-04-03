@@ -1,4 +1,4 @@
-width: 8
+width: a
 height: 2
 next-map: map1.txt
 ---

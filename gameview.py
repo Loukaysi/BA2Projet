@@ -5,6 +5,9 @@ from monster import Monster
 from monster import Slime
 from monster import Bat
 import weapon
+import math
+import os
+import tempfile
 
 PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
@@ -56,6 +59,9 @@ class GameView(arcade.View):
     held_keys_list: list[int]
     physics_engine: arcade.PhysicsEnginePlatformer
     
+    error_message:str
+    text_error:arcade.Text
+
     score: int
     text_score:arcade.Text
     sound_dict: dict[str,arcade.Sound]
@@ -75,8 +81,7 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.load_map("map3.txt")
-        #self.load_test("base")
+        self.load_map("map2.txt")
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
@@ -105,8 +110,8 @@ class GameView(arcade.View):
         # Defined and write the number of pieces
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
-
-        # Defined the arrow list
+        self.text_error = arcade.Text(self.error_message,x=150,y=self.camera.height/2,color=arcade.color.RED_DEVIL,font_size=50)
+        #
         self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.arrow_list = []
 
@@ -121,8 +126,14 @@ class GameView(arcade.View):
     def load_map(self, chosen_map:str)-> None:
         # Initialize the map
         self.game_map = Map()
-        self.game_map.ReadMap(chosen_map)
-
+        if self.game_map.ReadMap(chosen_map):
+            # Sets no problem with the game
+            self.error_message = ""
+        else:
+            self.error_message = "Something is wrong with the map"
+            self.game_map = Map()
+            self.game_map.ReadMap("debug_map.txt")
+            #print(self.game_map.MapString)
         # Creating player
         self.player_sprite=self.load_elements(":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png","S")[0]
         self.player_sprite_list = arcade.SpriteList()
@@ -187,10 +198,6 @@ class GameView(arcade.View):
                 scale= 0.5
             ))
         return Sprite_List
-
-    def load_test(self, test:str) -> None:
-        self.load_map("test_map_"+test+".txt")
-
 
     def on_key_press(self, key: int, modifiers: int) -> None:
         """Called when the user presses a key on the keyboard."""
@@ -317,12 +324,17 @@ class GameView(arcade.View):
         # move the arrows
         for arrow in self.arrow_list:
             arrow.move((0,0),wall = self.wall_sprite_list,no_go =self.no_go_sprite_list)
-            for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.slime_sprite_list):
-                enemy.kill()
-                del arrow
-            for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.bat_sprite_list):
-                enemy.kill()
-                del arrow
+            try:
+                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.slime_sprite_list):
+                    enemy.kill()
+                    arrow.weapon_sprite.kill()
+                    del arrow
+                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.bat_sprite_list):
+                    enemy.kill()
+                    arrow.weapon_sprite.kill()
+                    del arrow
+            except:
+                pass
 
         # Check for collisions with coins
         Coins_Touched_List : list[arcade.Sprite]
@@ -399,4 +411,5 @@ class GameView(arcade.View):
         with self.display_camera.activate():
             self.text_score.draw()
             self.display_sprite_list.draw()
+            self.text_error.draw()
     
