@@ -1,13 +1,10 @@
 import arcade
-import arcade.sprite
 from map import Map
 from monster import Monster
 from monster import Slime
 from monster import Bat
 import weapon
-import math
-import os
-import tempfile
+
 
 PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
@@ -81,7 +78,7 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.load_map("map2.txt")
+        self.load_map("map5.txt")
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
@@ -111,7 +108,7 @@ class GameView(arcade.View):
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
         self.text_error = arcade.Text(self.error_message,x=150,y=self.camera.height/2,color=arcade.color.RED_DEVIL,font_size=50)
-        #
+        # Defined the arrow list
         self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.arrow_list = []
 
