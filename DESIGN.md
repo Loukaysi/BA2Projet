@@ -17,11 +17,19 @@ Il a plein de méthodes à détailler :
 
 
 - Lecture de fichier
-Types monstres :
-- Blobs
-- Chauves-souris
-Types Armes :
-- Epée
-- Arc
-...
+
+
+
+Pour les armes, nous avons une classe abstraite Weapon et 3 classes enfants Sword, Bow et Arrow.
+Weapon gère ...
+
+Sword fait ...
+Bow fait ...
+Arrow fait ...
+
+Pour les monstres, nous avons une classe abstraite Monster et 2 classes enfants Slime et Bat.
+Monster gère ...
+
+Slime fait ...
+Bat fait ...
 

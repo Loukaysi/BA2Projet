@@ -77,7 +77,7 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.load_map("map2.txt")
+        self.choose_map("map2.txt")
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()

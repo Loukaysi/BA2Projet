@@ -39,6 +39,8 @@ tester des coordonnées précises de la map test
 - Le style est incroyable, donc rien à dire !
 
 
+
+
 Structure des tests :
 Un fichier test par fichier python ;
 
@@ -50,7 +52,7 @@ Un fichier test par fichier python ;
 - Main =>       J'ai pas trop capté ; ...
 
 
-- Gameview =>   Sprites ? ;
+- Gameview =>   Sprites ;
                 Pièces ;
                 Mouvements de la joueuse ; ...
 

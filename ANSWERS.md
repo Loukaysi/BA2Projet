@@ -72,7 +72,19 @@ Semaine sans nouvelle question.
 
 
 ## Semaine 8:
+
+### Quel algorithme utilisez-vous pour identifier tous les blocs d’une plateformes, et leurs limites de déplacement ?
 ...
+
+### Sur quelle structure travaille cet algorithme ? Quels sont les avantages et inconvénients de votre choix ?
+...
+
+### Quelle bibliothèque utilisez-vous pour lire les instructions des interrupteurs ? Dites en une ou deux phrases pourquoi vous avez choisi celle-là.
+...
+
+#### Comment votre design général évolue-t-il pour tenir compte des interrupteurs et des portails ?
+...
+
 
 ## Semaine 9:
 ...

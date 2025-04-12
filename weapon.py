@@ -39,8 +39,8 @@ class Sword(Weapon):
         self.offset_sprite_angle = math.pi/4
         self.texture = arcade.load_texture("assets/kenney-voxel-items-png/sword_silver.png")
 
-        vect_player_click_x = aiming_to[0] + camera.position[0] -player_position[0] - self.offset_position[0] - camera.width/2
-        vect_player_click_y = aiming_to[1] + camera.position[1] -player_position[1] - self.offset_position[1] - camera.height/2
+        vect_player_click_x = aiming_to[0] + camera.position[0] - player_position[0] - self.offset_position[0] - camera.width/2
+        vect_player_click_y = aiming_to[1] + camera.position[1] - player_position[1] - self.offset_position[1] - camera.height/2
         self.aiming_position = (vect_player_click_x,vect_player_click_y)
 
         super().__init__(player_position)
