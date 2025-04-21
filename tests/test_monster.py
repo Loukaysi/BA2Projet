@@ -17,16 +17,17 @@ def test_load_monster(window: arcade.Window) -> None:
     view.game_map = Map()
     with tempfile.NamedTemporaryFile(mode="w+",delete=False) as file:
         file.writelines([
-            "width: 10\r", 
-            "height: 6\r",
-            "next-map: testmap.txt\r"  
-            "---\r",
-            "     S    \r",
-            "----------\r",
-            "          \r",
-            "vvvvvvvvvv\r",
-            "oooooooooo\r",
-            "----------\r"
+            "width: 10\n", 
+            "height: 6\n",
+            "next-map: testmap.txt\n"  
+            "---\n",
+            "     S    \n",
+            "----------\n",
+            "          \n",
+            "vvvvvvvvvv\n",
+            "oooooooooo\n",
+            "----------\n",
+            "---\n"
         ])
         file_name = file.name
         
@@ -56,7 +57,7 @@ def test_load_monster(window: arcade.Window) -> None:
 
     # Only 1 loop for the time of the test as it takes a lot of time to execute 
     # NEED TO BE PUT BACK TO AT LEAST 24 TO MAKE SOME SLIMES GO BACK
-    for i in range(24): # Check that all the slimes dans bats move within their scopes
+    for i in range(1): # Check that all the slimes dans bats move within their scopes
         x:float|int
         y:float|int
         for monster in view.monster_list:

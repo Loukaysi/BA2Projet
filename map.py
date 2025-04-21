@@ -1,4 +1,5 @@
 from typing import TextIO
+import yaml
 
 class Map():
     MapString:list[str] # Storing the map disposition
@@ -7,47 +8,44 @@ class Map():
     def __init__(self) -> None:
         self.MapString = []
         self.MapConfig = {}
-
+    
     def ReadFile(self, MapFile: TextIO)->bool:
         try:
-            Read_Config = True # Begins the reading process by checking for parameters
+            read_config:bool = True # Begins the reading process by checking for parameters
+            map_config:list[str]=[]
+            map_design:list[str]=[]
             for line in MapFile:
-                if Read_Config: # Read the parameters for the map
+                if read_config: # Read the config part for the map
                     if(line[:3]=="---"): # This detects the end of the "config part" of the file
-                        Read_Config = False
-                    else: # Store the new parameter in the "config attribute"
-                        Name = "" 
-                        Value = ""
-                        Name_complete = False
-                        for c in line:
-                            if c == ':': # Find the separator between the name and the value of the parameter
-                                Name_complete = True
-                            elif c == '\n': # Check for the end of the line
-                                if Value[-1]== "\r":
-                                    Value = Value[:-1]
-                                self.MapConfig[Name] = Value # Take away the \r at the end of the line
-                            elif Name_complete == False: # Store the name
-                                Name+=(c)
-                            elif c != ' ': # Store the value (making sure to exclude the space bewtween the ':' and the value)
-                                Value+=(c)
-                elif len(self.MapString) < int(self.MapConfig["height"]): #check for end of file
-                    self.MapString.append("")
-                    for i in range(int(self.MapConfig["width"])):
-                        if i >= len(line):
-                            self.MapString[-1] = self.MapString[-1] + " "
-                        elif line[i]=="\n"or line[i]=="\r":
-                            self.MapString[-1] = self.MapString[-1] + " "
-                        else:
-                            self.MapString[-1] = self.MapString[-1] + line[i]
+                        read_config = False
+                    else:
+                        map_config.append(Remove_from(line))
+                else:
+                    map_design.append(Remove_from(line))
+
+            map_config_yaml = "\n".join(map_config)
+
+            self.MapConfig=yaml.safe_load(map_config_yaml)
+            self.Read_design(map_design)
             return True
         except:
             return False
 
+    def Read_design(self, map_string:list[str])->None:
+        for line in map_string:
+            if len(self.MapString) < int(self.MapConfig["height"]):
+                self.MapString.append("")
+                for i in range(int(self.MapConfig["width"])):
+                    if i >= len(line):
+                        self.MapString[-1] += " "
+                    elif line[i]=="\n"or line[i]=="\r":
+                        self.MapString[-1] += " "
+                    else:
+                        self.MapString[-1] += line[i]
+
     def ReadMap(self, chosen_map:str) -> bool:
         with open("map/" + chosen_map, "r", encoding="utf-8", newline='') as MapFile:
             return self.ReadFile(MapFile)
-            
-
     
     def FindElement(self, element:str)-> list[tuple[int,int]]:
         Position: list[tuple[int,int]]
@@ -59,6 +57,9 @@ class Map():
 
         return Position
 
+    def ShowPosition(self, position:tuple[int,int])->str:
+        return self.MapString[-position[1]-1][position[0]]
+
     def ShowMap(self) -> None:
         # Printing for debugging
         for line in self.MapConfig:
@@ -66,3 +67,13 @@ class Map():
             print(self.MapConfig[line])
         for line in self.MapString:
             print(line)
+
+def Remove_from(line:str,characters:tuple[str,...] = ("\n","\r"))->str:
+    """ Take away the unwanted characters at the end of lines"""
+    Done = False
+    while len(line) > 0 and not Done:
+        if line[:-1] in characters:
+            line = line[:-1]
+        else:
+            Done = True
+    return line

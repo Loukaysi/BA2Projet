@@ -29,8 +29,8 @@ def test_read_map_file() -> None:
         os.remove(test_file_name)
 
     assert(read_ok)
-    assert(test_map.MapConfig["width"]=="5")
-    assert(test_map.MapConfig["height"]=="4")
+    assert(int(test_map.MapConfig["width"])==5)
+    assert(int(test_map.MapConfig["height"])==4)
     assert(test_map.MapConfig["next-map"]=="testmap.txt")
     assert(test_map.MapString==["-----","=====","ooooo","S----"])
 

@@ -34,10 +34,11 @@ def test_weapon(window: arcade.Window) -> None:
     assert(len(view.monster_list)==1)
     view.player_sprite.position=((3+1/2)*SPRITE_SIZE,(3+1/2)*SPRITE_SIZE)
 
-    # Collect coins
-    """view.on_mouse_press(arcade.MOUSE_BUTTON_RIGHT, 0)
-    window.test(35)
-    view.on_key_release(arcade.key.RIGHT, 0)"""
+    # Hit
+    x:int= int(view.player_sprite.position[0]-view.camera.position[0]) + 1000
+    y:int= int(view.player_sprite.position[1]-view.camera.position[1])
 
-"""def click_at_angle(angle:float,position:tuple)->None:
-    x:float|int = """
+    view.on_mouse_press(x,y,arcade.MOUSE_BUTTON_LEFT, 0)
+    window.test(120)
+    view.on_mouse_release(x,y,arcade.MOUSE_BUTTON_LEFT, 0)
+    
