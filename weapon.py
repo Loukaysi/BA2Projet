@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import arcade
 import math
+from enum import IntEnum, auto
 
 ARROW_BASE_SPEED = 20
 ARROW_GRAVITY = 0.5
@@ -24,7 +25,6 @@ class Weapon:
                                           center_y=player_position[1] + self.offset_position[1] + math.sin(self.offset_sprite_angle-weapon_angle)*self.offset_angle,
                                            scale=0.5*0.7)
         self.weapon_sprite.radians = self.offset_sprite_angle-weapon_angle
-
 
     @abstractmethod 
     def move(self, *positions:tuple[float|int,float|int],**collision:arcade.SpriteList[arcade.Sprite])->None:
@@ -106,8 +106,12 @@ class Arrow(Weapon):
         else:
             for wall in walls:
                 try:
-                    if len(arcade.check_for_collision_with_list(self.weapon_sprite,walls[wall])):
+                    if len(arcade.check_for_collision_with_list(self.weapon_sprite,walls[wall]))!=0:
                         self.weapon_sprite.kill()
                         del self
                 except:
                     pass
+
+class Weapon_index(IntEnum):
+    SWORD = auto()
+    BOW = auto()
