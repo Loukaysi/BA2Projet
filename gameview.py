@@ -74,7 +74,7 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.choose_map("test_map_base.txt")
+        self.choose_map("map2.txt")
 
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
@@ -102,7 +102,7 @@ class GameView(arcade.View):
         self.score = 0
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
         self.text_error = arcade.Text(self.error_message,x=150,y=self.camera.height/2,color=arcade.color.RED_DEVIL,font_size=50)
-        #
+        # Defined the arrow list
         self.arrow_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.arrow_list = []
 

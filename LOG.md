@@ -79,9 +79,8 @@ Inscription en binôme (Le choix de la couleur était vital)
 * Benoît : Documents administratifs
 
 ### Semaine 7
-* Luca : Tests ...
-* Benoît : Tests ...
-* Les deux : Documents administratifs
+* Luca : Suite tests de lecture de fichier et chargement des maps
+* Benoît : Ecriture du fichier Design et des Answers en retard
 
 ### Semaine 8
 
