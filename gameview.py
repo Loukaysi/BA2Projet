@@ -188,20 +188,20 @@ class GameView(arcade.View):
 
     def load_plateform(self,plateform:Plateform)->list[tuple[int,int]]:
         for bloc in plateform.blocs:
-            Sprite = Sprite(self.texture_dict[self.game_map.ShowPosition(bloc)],scale=0.5,
+            bloc_sprite = Sprite(self.texture_dict[self.game_map.ShowPosition(bloc)],scale=0.5,
                                    center_x=SPRITE_SIZE/2+bloc[0]*SPRITE_SIZE,
                                    center_y=SPRITE_SIZE/2+bloc[1]*SPRITE_SIZE)
             
             if plateform.pos_max[0] > 0:
-                Sprite.change_x = 1
-                Sprite.boundary_right = SPRITE_SIZE * (plateform.pos_max[0]+bloc[0]-plateform.pos_start[0]) + Sprite.width
-                Sprite.boundary_left = SPRITE_SIZE * (bloc[0]-plateform.pos_start[0])+SPRITE_SIZE-(Sprite.right-Sprite.left)
+                bloc_sprite.change_x = 1
+                bloc_sprite.boundary_right = SPRITE_SIZE * (plateform.pos_max[0]+bloc[0]-plateform.pos_start[0]) + bloc_sprite.width
+                bloc_sprite.boundary_left = SPRITE_SIZE * (bloc[0]-plateform.pos_start[0])+SPRITE_SIZE-(bloc_sprite.right-bloc_sprite.left)
 
             if plateform.pos_max[1] > 0:
-                Sprite.change_y = 1
-                Sprite.boundary_top = SPRITE_SIZE * (plateform.pos_max[1]+bloc[1]-plateform.pos_start[1])+Sprite.height
-                Sprite.boundary_bottom = SPRITE_SIZE * (bloc[1]-plateform.pos_start[1])+SPRITE_SIZE-(Sprite.top-Sprite.bottom)
-            self.plateform_sprite_list.append(Sprite)
+                bloc_sprite.change_y = 1
+                bloc_sprite.boundary_top = SPRITE_SIZE * (plateform.pos_max[1]+bloc[1]-plateform.pos_start[1])+bloc_sprite.height
+                bloc_sprite.boundary_bottom = SPRITE_SIZE * (bloc[1]-plateform.pos_start[1])+SPRITE_SIZE-(bloc_sprite.top-bloc_sprite.bottom)
+            self.plateform_sprite_list.append(bloc_sprite)
         return plateform.blocs
 
     def load_elements(self, sprite:str,element:str) -> SpriteList[Sprite]:
