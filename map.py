@@ -53,12 +53,14 @@ class Map():
         for LineChecked in range(len(self.MapString)):
             for CharacterChecked in range(len(self.MapString[LineChecked])):
                 if(self.MapString[LineChecked][CharacterChecked]== element):
-                    Position.append((len(self.MapString) - 1 - LineChecked, CharacterChecked))
+                    Position.append((CharacterChecked,len(self.MapString) - 1 - LineChecked))
 
         return Position
 
     def ShowPosition(self, position:tuple[int,int])->str:
-        return self.MapString[-position[1]-1][position[0]]
+        if position[0]>=0 and position[0]<int(self.MapConfig["width"]) and position[1]>=0 and position[1]<int(self.MapConfig["height"]):
+            return self.MapString[-position[1]-1][position[0]]
+        return ""
 
     def ShowMap(self) -> None:
         # Printing for debugging

@@ -3,7 +3,7 @@ from map import Map
 from monster import Monster, Slime, Bat
 from weapon import Weapon, Weapon_index
 from weapon import Sword, Bow, Arrow
-
+from plateform import Plateform, create_plateforms
 
 PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
@@ -40,6 +40,7 @@ class GameView(arcade.View):
     display_sprite_list: arcade.SpriteList[arcade.Sprite]
 
     wall_sprite_list: arcade.SpriteList[arcade.Sprite]
+    plateform_sprite_list: arcade.SpriteList[arcade.Sprite]
     no_go_sprite_list: arcade.SpriteList[arcade.Sprite]
     coin_sprite_list: arcade.SpriteList[arcade.Sprite]
     ext_sprite_list: arcade.SpriteList[arcade.Sprite]
@@ -56,8 +57,9 @@ class GameView(arcade.View):
     score: int
     text_score:arcade.Text
     sound_dict: dict[str,arcade.Sound]
+    texture_dict: dict[str,str]
     game_map: Map
-
+    plateform_positions_list: list[tuple[int,int]]
 
     def __init__(self) -> None:
         # Magical incantion: initialize the Arcade view
@@ -119,13 +121,30 @@ class GameView(arcade.View):
             if self.game_map.ReadMap(chosen_map):
                 self.error_message = ""
                 self.Load_Map()
+        except Exception as error_message:
+            self.load_debug(str(error_message))
         except:
-            self.load_debug("Something is wrong with the map")
+            self.load_debug("Someting is wrong with the map")
 
     def Load_Map(self)->None:
+        self.texture_dict={}
+        self.texture_dict["="]=":resources:images/tiles/grassMid.png"
+        self.texture_dict["-"]=":resources:images/tiles/grassHalf_mid.png"
+        self.texture_dict["x"]=":resources:images/tiles/boxCrate_double.png"
+        self.texture_dict["£"]=":resources:images/tiles/lava.png"
+        self.texture_dict["E"]=":resources:images/tiles/signExit.png"
+
+
+        # Create the plateforms 
+        self.plateform_positions_list = []
+        self.plateform_sprite_list = arcade.SpriteList(use_spatial_hash=True)
+        plateforms = create_plateforms(self.game_map)
+        for plateform in plateforms:
+            self.plateform_positions_list.extend(self.load_plateform(plateform))  
+
         # Create the player
         self.player_sprite=self.load_elements(":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png","S")[0]
-        self.player_sprite_list = arcade.SpriteList()
+        self.player_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.player_sprite_list.append(self.player_sprite)
 
         # Create the walls, ground | box | platforms
@@ -133,7 +152,7 @@ class GameView(arcade.View):
         self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/grassMid.png","="))
         self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/boxCrate_double.png","x"))
         self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/grassHalf_mid.png","-"))
-        
+
         # Create the "no-go" zones, lava
         self.no_go_sprite_list = arcade.SpriteList(use_spatial_hash=True)
         self.no_go_sprite_list.extend(self.load_elements(":resources:images/tiles/lava.png","£"))
@@ -159,21 +178,39 @@ class GameView(arcade.View):
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player_sprite,
             walls=self.wall_sprite_list,
+            platforms=self.plateform_sprite_list,
             gravity_constant=PLAYER_GRAVITY
         )
 
         # Disables multiple jumps
         self.physics_engine.disable_multi_jump(); 
 
+    def load_plateform(self,plateform:Plateform)->list[tuple[int,int]]:
+        for bloc in plateform.blocs:
+            Sprite = arcade.Sprite(self.texture_dict[self.game_map.ShowPosition(bloc)],scale=0.5,
+                                   center_x=SPRITE_SIZE/2+bloc[0]*SPRITE_SIZE,
+                                   center_y=SPRITE_SIZE/2+bloc[1]*SPRITE_SIZE)
+            
+            if plateform.pos_max[0] > 0:
+                Sprite.change_x = 1
+                Sprite.boundary_right = SPRITE_SIZE * (plateform.pos_max[0]+bloc[0]-plateform.pos_start[0]) + Sprite.width
+                Sprite.boundary_left = SPRITE_SIZE * (bloc[0]-plateform.pos_start[0])+SPRITE_SIZE-(Sprite.right-Sprite.left)
+
+            if plateform.pos_max[1] > 0:
+                Sprite.change_y = 1
+                Sprite.boundary_top = SPRITE_SIZE * (plateform.pos_max[1]+bloc[1]-plateform.pos_start[1])+Sprite.height
+                Sprite.boundary_bottom = SPRITE_SIZE * (bloc[1]-plateform.pos_start[1])+SPRITE_SIZE-(Sprite.top-Sprite.bottom)
+            self.plateform_sprite_list.append(Sprite)
+        return plateform.blocs
 
     def load_elements(self, sprite:str,element:str) -> arcade.SpriteList[arcade.Sprite]:
         Position = self.game_map.FindElement(element)
         Sprite_List: arcade.SpriteList[arcade.Sprite]
         Sprite_List = arcade.SpriteList(use_spatial_hash=True)
         Sprite_List.extend([arcade.Sprite(sprite, scale= 0.5,
-                                          center_x= SPRITE_SIZE/2+Pos[1]*SPRITE_SIZE,
-                                          center_y= SPRITE_SIZE/2+Pos[0]*SPRITE_SIZE) 
-                            for Pos in Position])
+                                          center_x= SPRITE_SIZE/2+Pos[0]*SPRITE_SIZE,
+                                          center_y= SPRITE_SIZE/2+Pos[1]*SPRITE_SIZE) 
+                            for Pos in Position if Pos not in self.plateform_positions_list])
         return Sprite_List
 
     def on_key_press(self, key: int, modifiers: int) -> None:
@@ -348,6 +385,7 @@ class GameView(arcade.View):
         with self.camera.activate():
             self.player_sprite_list.draw()
             self.wall_sprite_list.draw()
+            self.plateform_sprite_list.draw()
             self.no_go_sprite_list.draw()
             self.coin_sprite_list.draw()
             self.ext_sprite_list.draw()
@@ -357,6 +395,7 @@ class GameView(arcade.View):
             if arcade.key.H in self.held_keys:
                 self.player_sprite_list.draw_hit_boxes()
                 self.wall_sprite_list.draw_hit_boxes()
+                self.plateform_sprite_list.draw_hit_boxes()
                 self.no_go_sprite_list.draw_hit_boxes()
                 self.coin_sprite_list.draw_hit_boxes()
                 self.ext_sprite_list.draw_hit_boxes()
