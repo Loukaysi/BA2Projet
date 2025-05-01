@@ -1,5 +1,5 @@
 from abc import abstractmethod
-import arcade
+from arcade import Sprite, SpriteList, check_for_collision_with_list
 import math
 import random
 
@@ -10,11 +10,11 @@ class Monster:
     This is an abstract class to deal with all the enemies
     """
     monster_speed: int
-    monster_sprite: arcade.Sprite
+    monster_sprite: Sprite
     initial_position: tuple[float|int,float|int]
 
     @abstractmethod
-    def move(self, walls:arcade.SpriteList[arcade.Sprite])-> None:
+    def move(self, walls:SpriteList[Sprite])-> None:
         pass
 
     def __del__(self)->None:
@@ -24,14 +24,14 @@ class Monster:
 class Slime(Monster):
     """Deal with the slimes movements"""
 
-    def __init__(self, sprite: arcade.Sprite)-> None:
+    def __init__(self, sprite: Sprite)-> None:
         self.monster_sprite = sprite
         self.monster_speed = -1
 
-    def move(self, walls:arcade.SpriteList[arcade.Sprite])->None:
-        collision_sprite:arcade.Sprite = arcade.Sprite(":resources:/images/enemies/slimeBlue.png", scale=0.0001)
+    def move(self, walls:SpriteList[Sprite])->None:
+        collision_sprite:Sprite = Sprite(":resources:/images/enemies/slimeBlue.png", scale=0.0001)
         # Check if the slime encountered a wall and if so, change his speed
-        if len(arcade.check_for_collision_with_list(self.monster_sprite, walls)) != 0:
+        if len(check_for_collision_with_list(self.monster_sprite, walls)) != 0:
             self.monster_speed = -self.monster_speed
             self.monster_sprite.texture = self.monster_sprite.texture.flip_horizontally()
         # Check for ground in front
@@ -39,7 +39,7 @@ class Slime(Monster):
             collision_sprite.position = (self.monster_sprite.right+self.monster_speed,self.monster_sprite.bottom)
         else:
             collision_sprite.position = (self.monster_sprite.left+self.monster_speed,self.monster_sprite.bottom)
-        if len(arcade.check_for_collision_with_list(collision_sprite, walls)) == 0:
+        if len(check_for_collision_with_list(collision_sprite, walls)) == 0:
             self.monster_speed = -self.monster_speed
             self.monster_sprite.texture = self.monster_sprite.texture.flip_horizontally()
         self.monster_sprite.strafe(self.monster_speed)
@@ -48,17 +48,17 @@ class Slime(Monster):
 class Bat(Monster):
     """Deal with the bat movements"""
 
-    def __init__(self, sprite: arcade.Sprite)-> None:
+    def __init__(self, sprite: Sprite)-> None:
         self.monster_sprite = sprite
         self.initial_position = sprite.position
     
-    def move(self, walls:arcade.SpriteList[arcade.Sprite]) -> None:
-        # define the relative position of bat in function of the initial position
+    def move(self, walls:SpriteList[Sprite]) -> None:
+        # define the relative position of bat from the initial position
         relative_bat_position_x = self.monster_sprite.right - self.initial_position[0]
         relative_bat_position_y = self.monster_sprite.bottom - self.initial_position[1]
-        # define the angle of movement of bat
+        # define the angle of movement of the bat
         move_angle = math.atan2(self.monster_sprite.change_y, self.monster_sprite.change_x) * 180 / math.pi
-        # calcul of the relative angle between the speed orientation and the relative position
+        # find the relative angle between the speed orientation and the relative position
         relative_angle = math.atan2(relative_bat_position_x, relative_bat_position_y) - move_angle
         
         # test if the vector size is bigger than the scope of action

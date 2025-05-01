@@ -1,0 +1,15 @@
+"=": full_grass
+"-": half_grass
+"x": box
+
+"£": lava
+"E": exit
+"*": coin
+
+"^": lever
+"|": gate
+
+"S": player
+
+"o": slime
+"v": bat

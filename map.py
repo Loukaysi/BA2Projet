@@ -1,14 +1,37 @@
 from typing import TextIO
 import yaml
 
+PATH_PACK = "loading_packs/"
+
 class Map():
     MapString:list[str] # Storing the map disposition
-    MapConfig:dict[str,str] # Storing parameters and their values
+    config:dict[str,str] # Storing parameters and their values
+    caracters: dict[str,str]
+    names:dict[str,str]
+    textures:dict[str,str]
+    sounds:dict[str,str]
 
     def __init__(self) -> None:
         self.MapString = []
-        self.MapConfig = {}
+        self.config = {}
+        self.caracters = {}
+        self.textures = {}
+        self.sounds = {}
     
+    def ReadMap(self, chosen_map:str) -> bool:
+        with open("map/" + chosen_map, "r", encoding="utf-8", newline='') as MapFile:
+            read:bool = self.ReadFile(MapFile)
+        if read:
+            packs = ("caracters","textures","sounds")
+            for pack in packs:
+                self.config[pack]=self.config.get(pack,PATH_PACK+pack+"/default.txt")
+                if not self.ReadPack(pack,self.config[pack]):
+                    read = False
+            self.names = {name: caracter for caracter,name in self.caracters.items()}
+        
+        return read
+
+
     def ReadFile(self, MapFile: TextIO)->bool:
         try:
             read_config:bool = True # Begins the reading process by checking for parameters
@@ -25,7 +48,7 @@ class Map():
 
             map_config_yaml = "\n".join(map_config)
 
-            self.MapConfig=yaml.safe_load(map_config_yaml)
+            self.config=yaml.safe_load(map_config_yaml)
             self.Read_design(map_design)
             return True
         except:
@@ -33,19 +56,15 @@ class Map():
 
     def Read_design(self, map_string:list[str])->None:
         for line in map_string:
-            if len(self.MapString) < int(self.MapConfig["height"]):
+            if len(self.MapString) < int(self.config["height"]):
                 self.MapString.append("")
-                for i in range(int(self.MapConfig["width"])):
+                for i in range(int(self.config["width"])):
                     if i >= len(line):
                         self.MapString[-1] += " "
                     elif line[i]=="\n"or line[i]=="\r":
                         self.MapString[-1] += " "
                     else:
                         self.MapString[-1] += line[i]
-
-    def ReadMap(self, chosen_map:str) -> bool:
-        with open("map/" + chosen_map, "r", encoding="utf-8", newline='') as MapFile:
-            return self.ReadFile(MapFile)
     
     def FindElement(self, element:str)-> list[tuple[int,int]]:
         Position: list[tuple[int,int]]
@@ -58,15 +77,35 @@ class Map():
         return Position
 
     def ShowPosition(self, position:tuple[int,int])->str:
-        if position[0]>=0 and position[0]<int(self.MapConfig["width"]) and position[1]>=0 and position[1]<int(self.MapConfig["height"]):
+        if position[0]>=0 and position[0]<int(self.config["width"]) and position[1]>=0 and position[1]<int(self.config["height"]):
             return self.MapString[-position[1]-1][position[0]]
         return ""
 
+    def ReadPack(self, pack:str, path:str="")-> bool:
+        try:
+            if path == "":
+                path = self.config[pack]
+
+            with open(path, "r", encoding="utf-8", newline='') as PackFile:
+                match pack:
+                    case "caracters": self.caracters = yaml.safe_load(PackFile)
+                    case "sounds": self.sounds = yaml.safe_load(PackFile)
+                    case "textures": self.textures = yaml.safe_load(PackFile)
+                    case _: return False
+        except:
+            
+            return False
+        return True
+
+    def match_textures(self,caracter:str)->str:
+        return self.textures[self.caracters[caracter]]
+        
+
     def ShowMap(self) -> None:
         # Printing for debugging
-        for line in self.MapConfig:
+        for line in self.config:
             print(line, end=': ')
-            print(self.MapConfig[line])
+            print(self.config[line])
         for line in self.MapString:
             print(line)
 

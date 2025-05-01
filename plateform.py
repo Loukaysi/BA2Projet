@@ -48,7 +48,7 @@ class Plateform:
 
 def create_plateforms(game_map:Map)->list[Plateform]:
     plateform_list:list[Plateform] = []
-    current_map:list[list[Characters]] = [[Characters.UNKNOWN for i in range(int(game_map.MapConfig["height"]))] for j in range(int(game_map.MapConfig["width"]))]
+    current_map:list[list[Characters]] = [[Characters.UNKNOWN for i in range(int(game_map.config["height"]))] for j in range(int(game_map.config["width"]))]
 
     arrows_list:list[tuple[tuple[int,int],str]]= []
     arrows_list.extend([(pos,"→")for pos in game_map.FindElement("→")])

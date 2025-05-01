@@ -24,6 +24,12 @@ DISTANCE_FROM_LEFT_CAM = 200    # Modifier
 SPRITE_SIZE = 64
 # Size of each sprite for the map
 
+PLAYER = ("player")
+WALLS = ("full_grass","half_grass","box")
+MISCELLANEOUS = ("lava","exit","coin","lever","gate")
+ENEMIES = ("slime","bat")
+WEAPONS = ("sword","bow","arrow")
+
 class GameView(arcade.View):
     """Main in-game view."""
 
@@ -40,11 +46,12 @@ class GameView(arcade.View):
     display_camera: arcade.camera.Camera2D
     display_sprite_list: SpriteList[Sprite]
 
+    display_map_sprite_list:SpriteList[Sprite]
     wall_sprite_list: SpriteList[Sprite]
     plateform_sprite_list: SpriteList[Sprite]
     no_go_sprite_list: SpriteList[Sprite]
     coin_sprite_list: SpriteList[Sprite]
-    ext_sprite_list: SpriteList[Sprite]
+    exit_sprite_list: SpriteList[Sprite]
 
     monster_sprite_list: SpriteList[Sprite]
     monster_list: list[Monster]
@@ -57,8 +64,8 @@ class GameView(arcade.View):
 
     score: int
     text_score:arcade.Text
+    texture_dict:dict[str,str]
     sound_dict: dict[str,arcade.Sound]
-    texture_dict: dict[str,str]
     game_map: Map
     plateform_positions_list: list[tuple[int,int]]
 
@@ -75,8 +82,6 @@ class GameView(arcade.View):
     def setup(self) -> None:
         """Set up the game here."""
 
-        self.choose_map("test_map_base.txt")
-
         # Setup of cameras
         self.camera = arcade.camera.Camera2D()
         self.display_camera = arcade.camera.Camera2D()
@@ -84,36 +89,17 @@ class GameView(arcade.View):
         # Creates the list of pressed keys
         self.held_keys = set()
 
-        # Loads all sounds that should be played
-        Coincollected = arcade.load_sound(":resources:sounds/coin1.wav")
-        PlayerJumped = arcade.load_sound(":resources:sounds/jump1.wav")
-        GameOver = arcade.load_sound(":resources:sounds/gameover1.wav")
-        MonsterKilled = arcade.load_sound(":resources:sounds/hurt3.wav")
-        NextLevel = arcade.load_sound(":resources:sounds/upgrade1.wav")
-
-        # 
-        self.sound_dict = {}
-        self.sound_dict["Coin"]=Coincollected
-        self.sound_dict["Jump"]=PlayerJumped
-        self.sound_dict["Game_Over"]=GameOver
-        self.sound_dict["Monster killed"] = MonsterKilled
-        self.sound_dict["Next_level"]=NextLevel
-
-        # 
+        # Set the starting score of the player
         self.score = 0
+        self.error_message = ""
         self.text_score = arcade.Text(f"coins : {self.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
         self.text_error = arcade.Text(self.error_message,x=150,y=self.camera.height/2,color=arcade.color.RED_DEVIL,font_size=50)
         
         # Define the arrow list
         self.arrow_list = []
         self.arrow_sprite_list = SpriteList(use_spatial_hash=True)
-       # 
-        self.active_weapon = Weapon_index.SWORD
-        self.displayed_weapon_sprite = Sprite("assets/kenney-voxel-items-png/sword_silver.png", center_x=35, center_y=self.camera.height - 65, scale=0.6)
-        self.displayed_weapon_sprite.append_texture(arcade.load_texture("assets/kenney-voxel-items-png/bow.png"))
 
-        self.display_sprite_list = SpriteList(use_spatial_hash=True)
-        self.display_sprite_list.append(self.displayed_weapon_sprite)
+        self.choose_map("test_map_base.txt")
 
     def choose_map(self, chosen_map:str)-> None:
         # Initialize the map
@@ -128,13 +114,10 @@ class GameView(arcade.View):
             self.load_debug("Someting is wrong with the map")
 
     def Load_Map(self)->None:
-        self.texture_dict={}
-        self.texture_dict["="]=":resources:images/tiles/grassMid.png"
-        self.texture_dict["-"]=":resources:images/tiles/grassHalf_mid.png"
-        self.texture_dict["x"]=":resources:images/tiles/boxCrate_double.png"
-        self.texture_dict["£"]=":resources:images/tiles/lava.png"
-        self.texture_dict["E"]=":resources:images/tiles/signExit.png"
 
+        # Load the different packs
+        self.load_textures()
+        self.load_sounds()
 
         # Create the plateforms 
         self.plateform_positions_list = []
@@ -144,33 +127,32 @@ class GameView(arcade.View):
             self.plateform_positions_list.extend(self.load_plateform(plateform))  
 
         # Create the player
-        self.player_sprite=self.load_elements(":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png","S")[0]
+        self.player_sprite=self.load_elements("player")[0]
         self.player_sprite_list = SpriteList(use_spatial_hash=True)
         self.player_sprite_list.append(self.player_sprite)
 
         # Create the walls, ground | box | platforms
         self.wall_sprite_list = SpriteList(use_spatial_hash=True)
-        self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/grassMid.png","="))
-        self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/boxCrate_double.png","x"))
-        self.wall_sprite_list.extend(self.load_elements(":resources:images/tiles/grassHalf_mid.png","-"))
+        for wall in WALLS:
+            self.wall_sprite_list.extend(self.load_elements(wall))
 
-        # Create the "no-go" zones, lava
+        # Create the lava, coins and exit sign
         self.no_go_sprite_list = SpriteList(use_spatial_hash=True)
-        self.no_go_sprite_list.extend(self.load_elements(":resources:images/tiles/lava.png","£"))
-
-        # Create the coins
         self.coin_sprite_list = SpriteList(use_spatial_hash=True)
-        self.coin_sprite_list.extend(self.load_elements(":resources:images/items/coinGold.png","*"))
+        self.exit_sprite_list = SpriteList(use_spatial_hash=True)
 
-        # Create the exit sign
-        self.ext_sprite_list = SpriteList(use_spatial_hash=True)
-        self.ext_sprite_list.extend(self.load_elements(":resources:images/tiles/signExit.png","E"))
+        match_type:dict[str,SpriteList[Sprite]] = {
+            "lava": self.no_go_sprite_list,
+            #"coin": self.coin_sprite_list,
+            "exit": self.exit_sprite_list
+        }
+
+        for object, list in match_type.items():
+            list.extend(self.load_elements(object))
 
         # Create the enemies, slimes | bats
-        self.monster_list = []
-
-        self.monster_list.extend([Slime(slime) for slime in self.load_elements(":resources:images/enemies/slimeBlue.png","o")])
-        self.monster_list.extend([Bat(bat) for bat in self.load_elements("assets/kenney-extended-enemies-png/bat.png","v")])
+        self.monster_list = [Slime(slime) for slime in self.load_elements("slime")]
+        self.monster_list.extend([Bat(bat) for bat in self.load_elements("bat")])
 
         self.monster_sprite_list= SpriteList(use_spatial_hash=True)
         self.monster_sprite_list.extend([monster.monster_sprite for monster in self.monster_list])
@@ -183,36 +165,69 @@ class GameView(arcade.View):
             gravity_constant=PLAYER_GRAVITY
         )
 
+        print(len(self.match_caracter_sprite("£")))
+
         # Disables multiple jumps
-        self.physics_engine.disable_multi_jump(); 
+        self.physics_engine.disable_multi_jump()
+
+        # Set the display for the
+        self.active_weapon = Weapon_index.SWORD
+        self.displayed_weapon_sprite = Sprite("assets/kenney-voxel-items-png/sword_silver.png", center_x=35, center_y=self.camera.height - 65, scale=0.6)
+        self.displayed_weapon_sprite.append_texture(arcade.load_texture("assets/kenney-voxel-items-png/bow.png"))
+
+        self.display_sprite_list = SpriteList(use_spatial_hash=True)
+        self.display_sprite_list.append(self.displayed_weapon_sprite) 
 
     def load_plateform(self,plateform:Plateform)->list[tuple[int,int]]:
         for bloc in plateform.blocs:
-            bloc_sprite = Sprite(self.texture_dict[self.game_map.ShowPosition(bloc)],scale=0.5,
+            bloc_sprite = Sprite(self.game_map.match_textures(self.game_map.ShowPosition(bloc)),scale=0.5,
                                    center_x=SPRITE_SIZE/2+bloc[0]*SPRITE_SIZE,
                                    center_y=SPRITE_SIZE/2+bloc[1]*SPRITE_SIZE)
             
             if plateform.pos_max[0] > 0:
                 bloc_sprite.change_x = 1
-                bloc_sprite.boundary_right = SPRITE_SIZE * (plateform.pos_max[0]+bloc[0]-plateform.pos_start[0]) + bloc_sprite.width
-                bloc_sprite.boundary_left = SPRITE_SIZE * (bloc[0]-plateform.pos_start[0])+SPRITE_SIZE-(bloc_sprite.right-bloc_sprite.left)
+                bloc_sprite.boundary_right = SPRITE_SIZE * (plateform.pos_max[0]+bloc[0]-plateform.pos_start[0]) + bloc_sprite.width+1
+                bloc_sprite.boundary_left = SPRITE_SIZE * (bloc[0]-plateform.pos_start[0])+SPRITE_SIZE-(bloc_sprite.right-bloc_sprite.left)+1
 
             if plateform.pos_max[1] > 0:
                 bloc_sprite.change_y = 1
-                bloc_sprite.boundary_top = SPRITE_SIZE * (plateform.pos_max[1]+bloc[1]-plateform.pos_start[1])+bloc_sprite.height
-                bloc_sprite.boundary_bottom = SPRITE_SIZE * (bloc[1]-plateform.pos_start[1])+SPRITE_SIZE-(bloc_sprite.top-bloc_sprite.bottom)
+                bloc_sprite.boundary_top = SPRITE_SIZE * (plateform.pos_max[1]+bloc[1]-plateform.pos_start[1])+bloc_sprite.height+1
+                bloc_sprite.boundary_bottom = SPRITE_SIZE * (bloc[1]-plateform.pos_start[1])+SPRITE_SIZE-(bloc_sprite.top-bloc_sprite.bottom)+1
             self.plateform_sprite_list.append(bloc_sprite)
         return plateform.blocs
 
-    def load_elements(self, sprite:str,element:str) -> SpriteList[Sprite]:
-        Position = self.game_map.FindElement(element)
+    def load_elements(self, element:str) -> SpriteList[Sprite]:
+        Position = self.game_map.FindElement(self.game_map.names[element])
         Sprite_List: SpriteList[Sprite]
         Sprite_List = SpriteList(use_spatial_hash=True)
-        Sprite_List.extend([Sprite(sprite, scale= 0.5,
+        Sprite_List.extend([Sprite(self.texture_dict[element], scale= 0.5,
                                           center_x= SPRITE_SIZE/2+Pos[0]*SPRITE_SIZE,
                                           center_y= SPRITE_SIZE/2+Pos[1]*SPRITE_SIZE) 
                             for Pos in Position if Pos not in self.plateform_positions_list])
         return Sprite_List
+
+    def match_caracter_sprite(self, element:str)->list[Sprite]:
+        return self.match_position_sprite(self.game_map.FindElement(element))
+
+    def match_position_sprite(self, positions:list[tuple[int,int]]) -> list[Sprite]:
+        return [sprite for sprite in self.display_map_sprite_list 
+                if ((sprite.center_x - SPRITE_SIZE/2 -1) / SPRITE_SIZE,
+                    (sprite.center_y - SPRITE_SIZE/2 -1) / SPRITE_SIZE) in positions]
+
+    def load_textures(self)->None:
+        self.texture_dict = self.game_map.textures
+        self.display_map_sprite_list = SpriteList(use_spatial_hash=True)
+        self.display_map_sprite_list.extend([Sprite(self.game_map.match_textures(caracter), scale = 0.5,
+                                                    center_x=SPRITE_SIZE/2 + caracter_number*SPRITE_SIZE + 1,
+                                                    center_y=SPRITE_SIZE/2 + (int(self.game_map.config["height"]) - 1 - line_number)*SPRITE_SIZE + 1) 
+                                                    for line_number,line in enumerate(self.game_map.MapString )
+                                                    for caracter_number, caracter in enumerate(line)
+                                                    if caracter in self.game_map.caracters])
+
+    def load_sounds(self) -> None:
+        self.sound_dict = {}
+        for sound,path in self.game_map.sounds.items():
+            self.sound_dict[sound] = arcade.load_sound(path)
 
     def on_key_press(self, key: int, modifiers: int) -> None:
         """Called when the user presses a key on the keyboard."""
@@ -223,7 +238,7 @@ class GameView(arcade.View):
             case arcade.key.UP:
                 if self.physics_engine.can_jump():
                     self.player_sprite.change_y = PLAYER_JUMP_SPEED  
-                    arcade.play_sound(self.sound_dict["Jump"])
+                    arcade.play_sound(self.sound_dict["PlayerJumped"])
             case arcade.key.ESCAPE:
                 # Restart the game
                 self.setup()
@@ -252,7 +267,7 @@ class GameView(arcade.View):
                         Monster_Touched : list[Sprite]
                         Monster_Touched = arcade.check_for_collision_with_list(self.player_weapon.weapon_sprite, self.monster_sprite_list)
                         for monster in Monster_Touched:
-                            arcade.play_sound(self.sound_dict["Monster killed"])
+                            arcade.play_sound(self.sound_dict["MonsterKilled"])
                             monster.kill()
                     case Weapon_index.BOW:
                         self.player_weapon = Bow(self.player_sprite.position,self.camera,(x,y))
@@ -341,20 +356,20 @@ class GameView(arcade.View):
         for coin in Coins_Touched_List:
             self.score += 1
             self.text_score.text = f"coins : {self.score}"
-            arcade.play_sound(self.sound_dict["Coin"])
+            arcade.play_sound(self.sound_dict["CoinCollected"])
             coin.remove_from_sprite_lists()
 
         # Check if collision with no_go (Lava)
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.no_go_sprite_list)) != 0:
-            arcade.play_sound(self.sound_dict["Game_Over"])
+            arcade.play_sound(self.sound_dict["GameOver"])
             self.setup()
 
         # Check for end of level
-        if len(arcade.check_for_collision_with_list(self.player_sprite, self.ext_sprite_list)) != 0:
-            arcade.play_sound(self.sound_dict["Next_level"])
+        if len(arcade.check_for_collision_with_list(self.player_sprite, self.exit_sprite_list)) != 0:
+            arcade.play_sound(self.sound_dict["NextLevel"])
             # Check if there is a next map
-            if "next-map" in self.game_map.MapConfig:
-                self.choose_map(self.game_map.MapConfig["next-map"])
+            if "next-map" in self.game_map.config:
+                self.choose_map(self.game_map.config["next-map"])
             else:
                 # Intended : if there is no next level, load the debugging map
                 self.load_debug("There was no next level")
@@ -369,7 +384,7 @@ class GameView(arcade.View):
 
         # Check for collisions with slime
         if len(arcade.check_for_collision_with_list(self.player_sprite, self.monster_sprite_list)) != 0:
-            arcade.play_sound(self.sound_dict["Game_Over"])
+            arcade.play_sound(self.sound_dict["GameOver"])
             self.setup()
 
     def load_debug(self, error_message:str) -> None:
@@ -389,9 +404,10 @@ class GameView(arcade.View):
             self.plateform_sprite_list.draw()
             self.no_go_sprite_list.draw()
             self.coin_sprite_list.draw()
-            self.ext_sprite_list.draw()
+            self.exit_sprite_list.draw()
             self.monster_sprite_list.draw()
             self.arrow_sprite_list.draw()
+            self.display_map_sprite_list.draw()
             # Affiche les hitbox si on appuie sur H
             if arcade.key.H in self.held_keys:
                 self.player_sprite_list.draw_hit_boxes()
@@ -399,7 +415,7 @@ class GameView(arcade.View):
                 self.plateform_sprite_list.draw_hit_boxes()
                 self.no_go_sprite_list.draw_hit_boxes()
                 self.coin_sprite_list.draw_hit_boxes()
-                self.ext_sprite_list.draw_hit_boxes()
+                self.exit_sprite_list.draw_hit_boxes()
                 self.monster_sprite_list.draw_hit_boxes()
                 self.arrow_sprite_list.draw_hit_boxes()
 
