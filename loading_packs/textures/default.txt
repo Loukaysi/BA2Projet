@@ -7,6 +7,7 @@ exit: ":resources:images/tiles/signExit.png"
 coin: ":resources:images/items/coinGold.png"
 
 lever: ":resources:/images/tiles/leverLeft.png"
+closed_lever: ":resources:/images/tiles/leverRight.png"
 gate: ":resources:/images/tiles/stoneCenter_rounded.png"
 
 player: ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"

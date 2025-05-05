@@ -48,7 +48,7 @@ class Plateform:
 
 def create_plateforms(game_map:Map)->list[Plateform]:
     plateform_list:list[Plateform] = []
-    current_map:list[list[Characters]] = [[Characters.UNKNOWN for i in range(int(game_map.config["height"]))] for j in range(int(game_map.config["width"]))]
+    current_map:list[list[Characters]] = [[Characters.UNKNOWN for i in range(game_map.height+1)] for j in range(game_map.width+1)]
 
     arrows_list:list[tuple[tuple[int,int],str]]= []
     arrows_list.extend([(pos,"→")for pos in game_map.FindElement("→")])
@@ -72,7 +72,6 @@ def create_plateforms(game_map:Map)->list[Plateform]:
             max_dist:dict[Side,int]={}
             (bloc_list,max_dist,current_map) = plateform_limit(game_map,bloc_list,max_dist,current_map,interesting_pos)
             plateform_list.append(create_plateform(bloc_list,max_dist))
-        
     return plateform_list
 
 def plateform_limit(game_map:Map, bloc_list:list[tuple[int,int]], max_dist:dict[Side,int], current_map:list[list[Characters]],current_pos:tuple[int,int])->tuple[

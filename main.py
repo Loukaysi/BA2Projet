@@ -14,6 +14,11 @@ def main() -> None:
     game_view = GameView()
     window.show_view(game_view)
     arcade.run()
+    try:
+        pass
+    except:
+        pass
+   
 
 if __name__ == "__main__":
     main()
