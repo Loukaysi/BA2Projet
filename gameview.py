@@ -7,6 +7,7 @@ from weapon import Weapon, Weapon_index
 from weapon import Sword, Bow, Arrow
 from plateform import Plateform, create_plateforms
 from switch import Switch, Gate
+import timeit
 
 PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
@@ -32,6 +33,8 @@ MISCELLANEOUS = ("lava","exit","coin","lever","gate")
 ENEMIES = ("slime","bat")
 WEAPONS = ("sword","bow","arrow")
 ROGUE_BLOCS = ("lever","lava","exit")
+
+MOVING_SPEED = 1
 
 class GameView(arcade.View):
     """Main in-game view."""
@@ -89,6 +92,8 @@ class GameView(arcade.View):
 
         # Setup our game
         self.setup()
+
+    print(timeit.timeit(lambda: sum(range(0, 100))))
 
     def setup(self) -> None:
         """Set up the game here."""
@@ -213,22 +218,31 @@ class GameView(arcade.View):
         for bloc in plateform.blocs:
             # Find the sprite of the bloc
             bloc_sprite = self.match_position_sprite([bloc])[0]
-            
-            # Check if the bloc should move horizontally
-            if plateform.pos_max[0] > 0:
-                bloc_sprite.change_x = 1
-                bloc_sprite.boundary_right = SPRITE_SIZE * (plateform.pos_max[0]+bloc[0]-plateform.pos_start[0]) + bloc_sprite.width+1
-                bloc_sprite.boundary_left = SPRITE_SIZE * (bloc[0]-plateform.pos_start[0])+SPRITE_SIZE-(bloc_sprite.right-bloc_sprite.left)+1
 
-            # check if the sprite should move vertically
-            if plateform.pos_max[1] > 0:
-                bloc_sprite.change_y = 1
-                bloc_sprite.boundary_top = SPRITE_SIZE * (plateform.pos_max[1]+bloc[1]-plateform.pos_start[1])+bloc_sprite.height+1
-                bloc_sprite.boundary_bottom = SPRITE_SIZE * (bloc[1]-plateform.pos_start[1])+SPRITE_SIZE-(bloc_sprite.top-bloc_sprite.bottom)+1
-            # check if the player should be able to walk through the bloc
             if self.game_map.caracters[self.game_map.ShowPosition(bloc)] in  ROGUE_BLOCS:
+                if plateform.pos_max[0] > 0:
+                    bloc_sprite.change_x = MOVING_SPEED
+                    bloc_sprite.boundary_right = bloc_sprite.center_x + SPRITE_SIZE*(plateform.pos_max[0]-plateform.pos_start[0])
+                    bloc_sprite.boundary_left = bloc_sprite.center_x - SPRITE_SIZE*plateform.pos_start[0]
+
+                if plateform.pos_max[1] > 0:
+                    bloc_sprite.change_y = MOVING_SPEED
+                    bloc_sprite.boundary_top = bloc_sprite.center_y + SPRITE_SIZE*(plateform.pos_max[1]-plateform.pos_start[1])
+                    bloc_sprite.boundary_bottom = bloc_sprite.center_y - SPRITE_SIZE*plateform.pos_start[1]
                 self.plateform_permeable_sprite_list.append(bloc_sprite)
             else:
+                # Check if the bloc should move horizontally
+                if plateform.pos_max[0] > 0:
+                    bloc_sprite.change_x = MOVING_SPEED
+                    bloc_sprite.boundary_right = SPRITE_SIZE * (plateform.pos_max[0]+bloc[0]-plateform.pos_start[0]) + bloc_sprite.width+1
+                    bloc_sprite.boundary_left = SPRITE_SIZE * (bloc[0]-plateform.pos_start[0])+SPRITE_SIZE-(bloc_sprite.right-bloc_sprite.left)+1
+
+                # check if the sprite should move vertically
+                if plateform.pos_max[1] > 0:
+                    bloc_sprite.change_y = MOVING_SPEED
+                    bloc_sprite.boundary_top = SPRITE_SIZE * (plateform.pos_max[1]+bloc[1]-plateform.pos_start[1])+bloc_sprite.height+1
+                    bloc_sprite.boundary_bottom = SPRITE_SIZE * (bloc[1]-plateform.pos_start[1])+SPRITE_SIZE-(bloc_sprite.top-bloc_sprite.bottom)+1
+                
                 self.plateform_solid_sprite_list.append(bloc_sprite)
         return plateform.blocs
 
@@ -291,7 +305,6 @@ class GameView(arcade.View):
                 self.gate_list.append(self.gate_dict[pos])
             # TRASNFORMER TOUTES LES LISTES EN DICTIONNAIRE EST UNE BONNE IDEE 
 
-
     def load_switch(self)->None:
         self.switch_sprite_list = SpriteList(use_spatial_hash=True)
         self.switch_list = []
@@ -321,7 +334,6 @@ class GameView(arcade.View):
                         self.switch_list.append(Switch(sprite, state = state, gates=self.gate_dict,
                                                        switch_off_actions=switch_off_actions,
                                                        switch_on_actions=switch_on_actions))
-
 
     def load_physics(self)->None:
         """
@@ -484,15 +496,19 @@ class GameView(arcade.View):
         """
         Manually move the blocs that aren't in the plateforms but should be moving
         """
+        self.plateform_permeable_sprite_list.update()
         for bloc in self.plateform_permeable_sprite_list: 
-            bloc.update()
             # check if the bloc has it it's boundaries
-            if bloc.boundary_bottom!= None and bloc.boundary_top!= None and (
-                bloc.top + bloc.change_y > bloc.boundary_top or bloc.bottom + bloc.change_y < bloc.boundary_bottom):
-                bloc.change_y = -bloc.change_y
-            if bloc.boundary_left != None and bloc.boundary_right != None and(
-                bloc.left + bloc.change_x < bloc.boundary_left or bloc.right + bloc.change_x > bloc.boundary_right):
-                bloc.change_x = -bloc.change_x
+            if bloc.boundary_bottom!= None and bloc.boundary_top!= None:
+                if bloc.boundary_top- bloc.center_y <=0:
+                    bloc.change_y = -MOVING_SPEED
+                elif bloc.center_y-bloc.boundary_bottom <=0:
+                    bloc.change_y = MOVING_SPEED
+            if bloc.boundary_left != None and bloc.boundary_right != None:
+                if bloc.center_x - bloc.boundary_left<= 0:
+                    bloc.change_x = MOVING_SPEED
+                elif bloc.boundary_right - bloc.center_x <=0:
+                    bloc.change_x = -MOVING_SPEED
 
     def move_camera(self)->None:
         """
@@ -522,11 +538,15 @@ class GameView(arcade.View):
         for arrow in self.arrow_list:
             arrow.move((0,0),wall = self.wall_sprite_list,plateforms=self.plateform_solid_sprite_list,no_go =self.no_go_sprite_list)
             if arrow.weapon_sprite in self.arrow_sprite_list:
-                for enemy in arcade.check_for_collision_with_list(arrow.weapon_sprite,self.monster_sprite_list):
+                enemies_touched = arcade.check_for_collision_with_list(arrow.weapon_sprite,self.monster_sprite_list)
+                for enemy in enemies_touched:
                     enemy.kill()
-                    arrow.weapon_sprite.kill()
-                    del arrow
-
+                    try:
+                        arrow.weapon_sprite.kill()
+                        del arrow
+                    except:
+                        pass
+                    
     def move_monsters(self)->None:
         """
         Move the monsters on the map
@@ -544,9 +564,13 @@ class GameView(arcade.View):
         Note : The sword is considered "inactive" even it stays on the screen so we don't consider it
         """
         switch_touched:set[Sprite] = set()
-        for arrow in self.arrow_sprite_list:
-            switch_touched = switch_touched.union(arcade.check_for_collision_with_list(arrow,self.switch_sprite_list))
-        
+        for arrow in self.arrow_list:
+            switch_touched = switch_touched.union(arcade.check_for_collision_with_list(arrow.weapon_sprite,self.switch_sprite_list))
+            for switch in self.switch_list:
+                    if switch.sprite in switch_touched:
+                        switch.trigger_actions()
+                        arrow.weapon_sprite.kill()
+        #ATTENTION LES FELCHES SONT TOUTE SUPPRIMEES QUAND UNE TOUCHE UN LEVIER 
         #switch_touched:list[tuple[Sprite,Switch]] = [(sprite,switch)]
 
     def collision_with_coin(self)->None:

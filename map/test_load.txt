@@ -37,7 +37,7 @@ gates:
     state: open # this gate is open when the game starts
   # the other gates start closed
 ---
-^     x           x
+^     x ↑         x
 --    £ ^→        x→
       x-----      |
    ---x           =
