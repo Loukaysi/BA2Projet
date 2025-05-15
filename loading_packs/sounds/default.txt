@@ -1,0 +1,5 @@
+CoinCollected: ":resources:sounds/coin1.wav"
+PlayerJumped: ":resources:sounds/jump1.wav"
+GameOver: ":resources:sounds/gameover1.wav"
+MonsterKilled: ":resources:sounds/hurt3.wav"
+NextLevel: ":resources:sounds/upgrade1.wav"

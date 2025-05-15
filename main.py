@@ -15,5 +15,13 @@ def main() -> None:
     window.show_view(game_view)
     arcade.run()
 
+    game_view.profiler.dump_stats("profile.prof")
+    
+    try:
+        pass
+    except:
+        pass
+   
+
 if __name__ == "__main__":
     main()

@@ -1,0 +1,21 @@
+full_grass: ":resources:images/tiles/grassMid.png"
+half_grass: ":resources:images/tiles/grassHalf_mid.png"
+box: ":resources:images/tiles/boxCrate_double.png"
+
+lava: ":resources:images/tiles/lava.png"
+exit: ":resources:images/tiles/signExit.png"
+coin: ":resources:images/items/coinGold.png"
+
+lever: ":resources:/images/tiles/leverLeft.png"
+closed_lever: ":resources:/images/tiles/leverRight.png"
+gate: ":resources:/images/tiles/stoneCenter_rounded.png"
+
+player: ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
+
+slime: ":resources:images/enemies/slimeBlue.png"
+bat: "assets/kenney-extended-enemies-png/bat.png"
+spider: "assets/kenney-extended-enemies-png/spider.png"
+
+sword: "assets/kenney-voxel-items-png/sword_silver.png"
+bow: "assets/kenney-voxel-items-png/bow.png"
+arrow: "assets/kenney-voxel-items-png/arrow.png"
