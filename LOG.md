@@ -4,24 +4,24 @@
 
 * [x] 1. Créer le LOG.md + Inscription binôme + Découverte arcade      30
 * [x] 2. Meilleure gestion du clavier et de la caméra                  30
-* [x] 2. Intégrer les sons                                             10
-* [x] 3. Intégrer la lecture de fichier                                120 [ ] + Tests 40
-* [x] 3. Intégrer la lave                                              15  [ ] + Tests 5
-* [x] 3. Design de premiers niveaux                                    30
-* [x] 4. Intégrer les blobs + Améliorations                            50  [ ] + Tests 20
-* [x] 4. Intégrer l'épée                                               40  [ ] + Tests 
-* [x] 5. Modifier système monstres et armes avec classe abstract       15
-* [x] 5. Intégrer les chauves-souris avec mouvement pseudo-aléatoire   45  [ ] + Tests 20
-* [x] 5. Intégrer l'arc avec flèche                                    60  [ ] + Tests 20
-* [x] 6. Refactoring noms et types de variables                        30
-* [x] 6. Avancement de création de niveaux                             30
-* [ ] 7. 
-* [ ] 7. 
-* [ ] 8. 
-* [ ] 8. 
-...
-* [x] Fin. Mise au propre des documents                                ??
-* [ ] Fin. `README.md` à jour, expliquant comment jouer                ??
+* [x] 3. Intégrer les sons                                             10
+* [x] 4. Intégrer la lecture de fichier                                120 [x] + Tests 1h30
+* [x] 5. Intégrer la lave                                              15  [x] + Tests 15
+* [x] 6. Design de premiers niveaux                                    30
+* [x] 7. Intégrer les blobs + Améliorations                            50  [x] + Tests 30
+* [x] 8. Intégrer l'épée                                               40  [x] + Tests 1h00
+* [x] 9. Modifier système monstres et armes avec classe abstract       15
+* [x] 10. Intégrer les chauves-souris avec mouvement pseudo-aléatoire  60  [x] + Tests 40
+* [x] 11. Intégrer l'arc avec flèche                                   60  [x] + Tests 40
+* [x] 12. Refactoring noms et types de variables                       30
+* [x] 13. Avancement de création de niveaux                            30
+* [x] 14. Ajout du mouvement des plateformes + Lecture Yaml            180 [x] + Tests 90
+* [x] 15. Ecriture de commentaires et refactoring                      90
+* [x] 16. Ajout de la feature Araignée                                 120 [x] + Tests 60
+* [x] 17. Ajout de la feature portail de taille                        90  [x] + Tests 40
+* [x] 18. 
+* [x] 20. Mise au propre des documents                                60
+* [x] 21. `README.md` à jour, expliquant comment jouer                60
 
 
 ---
@@ -80,19 +80,31 @@ Inscription en binôme (Le choix de la couleur était vital)
 
 ### Semaine 7
 * Luca : Suite tests de lecture de fichier et chargement des maps
-* Benoît : Ecriture du fichier Design et des Answers en retard
+* Benoît : Début du fichier Design et des Answers en retard
 
 ### Semaine 8
-
+* Luca : Création du système de plateformes + Refactoring
+* Benoît : Création des interrupteurs et des portails
 
 ### Semaine 9
+* Luca : Ajustements du système de plateformes + Ecriture du test des plateformes
+* Benoît : Suite du fichier Design et des Answers en retard + Ecriture des commentaires
 
 ### Semaine 10
+* Luca : Tests des blobs et chauves-souris
+* Benoît : Création de nouveaux niveaux + Tests des armes
 
 ### Semaine 11
+* Luca : Ajout de la feature Araignée
+* Benoît : Ajout de la feature portail de taille
 
 ### Semaine 12
+* Luca : Tests feature Araignée
+* Benoît : Tests feature portail de taille
 
 ### Semaine 13
+* Luca : Fin des tests
+* Benoît : Ecriture du fichier README + fin fichier design
 
 ### Semaine 14
+* Luca et Benoît : Polishing et rendu final du projet
