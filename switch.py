@@ -66,7 +66,6 @@ class Switch:
             case State.ON:display_texture_n = 0
             case State.OFF:display_texture_n = 1
             case State.DISABLED: pass
-        print(self.sprite.textures)
         self.sprite.set_texture(display_texture_n)
 
     def trigger_actions(self)->None:
@@ -76,9 +75,3 @@ class Switch:
                 match action:
                     case State(): self.state = action
                     case Handle_Gate(): action.gate.set_state(action.open)
-
-def load_switches(switch_list:list[dict[str,int]],gates:dict[str,str|int])->Sequence[Switch]:
-    switches:list[Switch] = []
-    for switch in switch_list:
-        print(switch)
-    return switches

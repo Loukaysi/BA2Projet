@@ -14,6 +14,7 @@ player: ":resources:images/animated_characters/female_adventurer/femaleAdventure
 
 slime: ":resources:images/enemies/slimeBlue.png"
 bat: "assets/kenney-extended-enemies-png/bat.png"
+spider: "assets/kenney-extended-enemies-png/spider.png"
 
 sword: "assets/kenney-voxel-items-png/sword_silver.png"
 bow: "assets/kenney-voxel-items-png/bow.png"

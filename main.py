@@ -14,6 +14,9 @@ def main() -> None:
     game_view = GameView()
     window.show_view(game_view)
     arcade.run()
+
+    game_view.profiler.dump_stats("profile.prof")
+    
     try:
         pass
     except:

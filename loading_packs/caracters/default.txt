@@ -13,3 +13,4 @@
 
 "o": slime
 "v": bat
+"8": spider

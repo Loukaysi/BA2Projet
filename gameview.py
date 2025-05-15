@@ -1,13 +1,13 @@
 import arcade
+import cProfile
 from arcade import Sprite, SpriteList
 from typing import Mapping
 from map import Map
-from monster import Monster, Slime, Bat
+from monster import Monster, Slime, Bat, Spider
 from weapon import Weapon, Weapon_index
 from weapon import Sword, Bow, Arrow
 from plateform import Plateform, create_plateforms
 from switch import Switch, Gate
-import timeit
 
 PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
@@ -18,10 +18,10 @@ PLAYER_GRAVITY = 1
 PLAYER_JUMP_SPEED = 21
 # Instant vertical speed for jumping, in pixels per frame.
 
-DISTANCE_FROM_UPPER_CAM = 300   # Nombres
-DISTANCE_FROM_LOWER_CAM = 200   # Bizzares
-DISTANCE_FROM_RIGHT_CAM = 10    # A
-DISTANCE_FROM_LEFT_CAM = 200    # Modifier
+DISTANCE_FROM_UPPER_CAM = 300   
+DISTANCE_FROM_LOWER_CAM = 200   
+DISTANCE_FROM_RIGHT_CAM = 10    
+DISTANCE_FROM_LEFT_CAM = 200    
 # Minimum distance between camera and player in all directions
 
 SPRITE_SIZE = 64
@@ -30,7 +30,7 @@ SPRITE_SIZE = 64
 PLAYER = ("player")
 WALLS = ("full_grass","half_grass","box","gate")
 MISCELLANEOUS = ("lava","exit","coin","lever","gate")
-ENEMIES = ("slime","bat")
+ENEMIES = ("slime","bat","spider")
 WEAPONS = ("sword","bow","arrow")
 ROGUE_BLOCS = ("lever","lava","exit")
 
@@ -38,6 +38,7 @@ MOVING_SPEED = 1
 
 class GameView(arcade.View):
     """Main in-game view."""
+    profiler: cProfile.Profile
 
     player_sprite:Sprite
     player_weapon:Weapon
@@ -87,13 +88,13 @@ class GameView(arcade.View):
         # Magical incantion: initialize the Arcade view
         super().__init__()
 
+        self.profiler = cProfile.Profile()
+
         # Choose a nice comfy background color
         self.background_color = arcade.csscolor.CORNFLOWER_BLUE
 
         # Setup our game
         self.setup()
-
-    print(timeit.timeit(lambda: sum(range(0, 100))))
 
     def setup(self) -> None:
         """Set up the game here."""
@@ -102,7 +103,7 @@ class GameView(arcade.View):
         self.camera = arcade.camera.Camera2D()
         self.display_camera = arcade.camera.Camera2D()
 
-        # Creates the list of pressed keys
+        # Creates the set of pressed keys
         self.held_keys = set()
 
         # Set the starting score of the player
@@ -120,13 +121,13 @@ class GameView(arcade.View):
     def choose_map(self, chosen_map:str)-> None:
         # Initialize the map
         self.game_map = Map()
-        #try:
-        self.game_map.ReadMap(chosen_map)
-        self.Load_Map()
-        #except Exception as error_message:
-        #    self.load_debug(str(error_message))
-        #except:
-        #    self.load_debug("Someting is wrong with the map")
+        try:
+            self.game_map.ReadMap(chosen_map)
+            self.Load_Map()
+        except Exception as error_message:
+            self.load_debug(str(error_message))
+        except:
+            self.load_debug("Someting is wrong with the map")
 
     def Load_Map(self)->None:
 
@@ -266,17 +267,38 @@ class GameView(arcade.View):
         """
         Initialise the lists for the monsters
         """
-        self.monster_list = [Slime(slime) for slime in self.match_caracter_sprite(self.game_map.names["slime"])]
+        self.monster_list = [Slime(pos,self.game_map,self.match_position_sprite([pos])[0]) 
+                             for pos in self.game_map.FindElement(self.game_map.names["slime"])]
+        
+        spiders = [(pos,self.game_map,self.match_position_sprite([pos])[0]) 
+                             for pos in self.game_map.FindElement(self.game_map.names["spider"])]
+        self.monster_list.extend([Spider(spider[0],spider[1],spider[2]) for spider in spiders])
+        # fix the spiders position (they spawn in the air facing left otherwise)
+        for spider in spiders : 
+            sprite = spider[2]
+            sprite.texture = sprite.texture.flip_horizontally()
+            sprite.center_y -= (SPRITE_SIZE - sprite.height)/2
         self.monster_list.extend([Bat(bat) for bat in self.match_caracter_sprite(self.game_map.names["bat"])])
 
         self.monster_sprite_list= SpriteList(use_spatial_hash=True)
         self.monster_sprite_list.extend([monster.monster_sprite for monster in self.monster_list])
 
     def load_gate_and_switch(self)->None:
+        """
+        Calls ``load_gate()`` then ``load_switch()`` to ensure that every ``Gate`` object has been initialised 
+        """
         self.load_gate()
         self.load_switch()
 
     def load_gate(self)->None:
+        """
+        Initialise the ``Gate`` objects 
+
+        !! 
+        Must be called before ``load_switch()`` it relies on the ``gate_dict`` attribute
+        which is initialised in this method
+        !!
+        """
         self.gate_sprite_list = SpriteList(use_spatial_hash=True)
         self.gate_list = []
         gate_positions = self.game_map.FindElement(self.game_map.names["gate"])
@@ -306,6 +328,14 @@ class GameView(arcade.View):
             # TRASNFORMER TOUTES LES LISTES EN DICTIONNAIRE EST UNE BONNE IDEE 
 
     def load_switch(self)->None:
+        """
+        Initialise the ``Switch`` objects 
+
+        !!
+        Warning the method ``load_gate()`` must be called before hand to ensure
+        that the switches can associate with ``gate_dict``
+        !!
+        """
         self.switch_sprite_list = SpriteList(use_spatial_hash=True)
         self.switch_list = []
         if "switches" in self.game_map.config:
@@ -362,7 +392,7 @@ class GameView(arcade.View):
 
     def match_caracter_sprite(self, element:str)->SpriteList[Sprite]:
         """
-        Returns the list of sprites that are associated with the given caracter
+        Returns the list of sprites that are associated with the given caracter by calling ``match_position_sprite()``
         """
         return self.match_position_sprite(self.game_map.FindElement(element))
 
@@ -389,9 +419,7 @@ class GameView(arcade.View):
                 if self.physics_engine.can_jump():
                     self.player_sprite.change_y = PLAYER_JUMP_SPEED  
                     arcade.play_sound(self.sound_dict["PlayerJumped"])
-            case arcade.key.ESCAPE:
-                # Restart the game
-                self.setup()
+            case arcade.key.ESCAPE: self.setup() # Restart the game
 
     def on_key_release(self, key: int, modifiers: int) -> None:
         """
@@ -441,7 +469,7 @@ class GameView(arcade.View):
                         self.active_weapon = Weapon_index.SWORD # Swicth to the sword
                
                 self.displayed_weapon_sprite.set_texture(self.active_weapon-1) # adapt the display
-                            
+
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int) -> None:
         """
         Called when the user releases a mouse button
@@ -464,6 +492,11 @@ class GameView(arcade.View):
         This is where in-world time "advances", or "ticks".
         """
 
+        self.profiler.enable()
+        self.do_on_update(delta_time)
+        self.profiler.disable()
+
+    def do_on_update(self, delta_time: float)->None:
         # Act according to the pressed keys
         for key in self.held_keys:
             match key:
@@ -500,15 +533,11 @@ class GameView(arcade.View):
         for bloc in self.plateform_permeable_sprite_list: 
             # check if the bloc has it it's boundaries
             if bloc.boundary_bottom!= None and bloc.boundary_top!= None:
-                if bloc.boundary_top- bloc.center_y <=0:
-                    bloc.change_y = -MOVING_SPEED
-                elif bloc.center_y-bloc.boundary_bottom <=0:
-                    bloc.change_y = MOVING_SPEED
+                if bloc.boundary_top- bloc.center_y <=0 or bloc.center_y-bloc.boundary_bottom <=0:
+                    bloc.change_y = -bloc.change_y
             if bloc.boundary_left != None and bloc.boundary_right != None:
-                if bloc.center_x - bloc.boundary_left<= 0:
-                    bloc.change_x = MOVING_SPEED
-                elif bloc.boundary_right - bloc.center_x <=0:
-                    bloc.change_x = -MOVING_SPEED
+                if bloc.center_x - bloc.boundary_left<= 0 or bloc.boundary_right - bloc.center_x <=0:
+                    bloc.change_x = -bloc.change_x
 
     def move_camera(self)->None:
         """
@@ -530,7 +559,7 @@ class GameView(arcade.View):
         Move the weapons (i.e. sword, bow, arrows, ...) of the player
         """
         try: # we don't know if the weapon exists
-            self.player_weapon.move(self.player_sprite.position)
+            self.player_weapon.move(position=self.player_sprite.position)
         except:
             pass
 
@@ -539,21 +568,20 @@ class GameView(arcade.View):
             arrow.move((0,0),wall = self.wall_sprite_list,plateforms=self.plateform_solid_sprite_list,no_go =self.no_go_sprite_list)
             if arrow.weapon_sprite in self.arrow_sprite_list:
                 enemies_touched = arcade.check_for_collision_with_list(arrow.weapon_sprite,self.monster_sprite_list)
+                if len(enemies_touched) != 0:
+                    arrow.weapon_sprite.kill()
+                    self.arrow_list.remove(arrow)
                 for enemy in enemies_touched:
                     enemy.kill()
-                    try:
-                        arrow.weapon_sprite.kill()
-                        del arrow
-                    except:
-                        pass
-                    
+            else:
+                self.arrow_list.remove(arrow)
     def move_monsters(self)->None:
         """
         Move the monsters on the map
         """
         for monster in self.monster_list:
             if(monster.monster_sprite in self.monster_sprite_list):
-                monster.move(self.wall_sprite_list)
+                monster.move()
             else:
                 self.monster_list.remove(monster)
                 del monster
@@ -570,7 +598,7 @@ class GameView(arcade.View):
                     if switch.sprite in switch_touched:
                         switch.trigger_actions()
                         arrow.weapon_sprite.kill()
-        #ATTENTION LES FELCHES SONT TOUTE SUPPRIMEES QUAND UNE TOUCHE UN LEVIER 
+        #ATTENTION LES FLECHES SONT TOUTE SUPPRIMEES QUAND UNE TOUCHE UN LEVIER 
         #switch_touched:list[tuple[Sprite,Switch]] = [(sprite,switch)]
 
     def collision_with_coin(self)->None:
@@ -655,8 +683,7 @@ class GameView(arcade.View):
                 self.player_sprite_list.draw_hit_boxes()
                 self.arrow_sprite_list.draw_hit_boxes()
                 self.display_map_sprite_list.draw_hit_boxes()
-                
-                
+                     
         with self.display_camera.activate(): # display the texts and  the player weapon
             self.text_score.draw()
             self.display_sprite_list.draw()
