@@ -33,13 +33,16 @@ class Weapon:
                                            scale=0.5*0.7)
         self.weapon_sprite.radians = self.offset_sprite_angle-weapon_angle
 
-    def move(self, position:tuple[float|int,float|int] = (0,0),**collision:arcade.SpriteList[arcade.Sprite])->None:
+    def move(self, position:tuple[float|int,float|int] = (0,0))->None:
         """
         Move the weapon according to the player's position
         """
         player_position = position
         self.weapon_sprite.center_x=player_position[0] + self.offset_position[0] + math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle
         self.weapon_sprite.center_y=player_position[1] + self.offset_position[1] + math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle 
+
+    def hit(self, collision_with:arcade.SpriteList[arcade.Sprite])->arcade.SpriteList[arcade.Sprite]:
+        return arcade.check_for_collision_with_list(self.weapon_sprite,collision_with)
 
 class Sword(Weapon):
     """
@@ -99,7 +102,7 @@ class Arrow(Weapon):
         self.weapon_sprite.change_x=Vector*math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)
         self.weapon_sprite.change_y=Vector*math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)
 
-    def move(self, position:tuple[float|int,float|int] = (0,0), **walls:arcade.SpriteList[arcade.Sprite])->None:
+    def move(self, position:tuple[float|int,float|int] = (0,0))->None:
         """
         Moves the arrow to form a parabollic trajectory overall
         The sprite is automatically aimed to follow the course of the trajectory  
@@ -122,12 +125,6 @@ class Arrow(Weapon):
 
         if self.weapon_sprite.position[1] < 0: # check if we are bellow the screen
            self.weapon_sprite.kill()
-        else:
-            hit = 0 
-            for wall in walls: #count over all walls if any were hit
-                hit += len(arcade.check_for_collision_with_list(self.weapon_sprite,walls[wall]))
-            if hit != 0:
-                self.weapon_sprite.kill()
 
 class Weapon_index(IntEnum):
     """

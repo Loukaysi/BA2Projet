@@ -10,7 +10,7 @@ WALLS = ("full_grass","half_grass","box","gate")
 SLIME_CAN_GO=("full_grass","half_grass")
 SPIDER_CAN_GO=("full_grass","half_grass","box","lava")
 
-
+SPIDER_SPEED = 3
 SPRITE_SIZE = 64
 
 BAT_CIRCLE_SCOPE = 40
@@ -112,54 +112,113 @@ class SPIDER_DIRECTION(Enum):
     LEFT = auto()
     DOWN = auto()
 
+position_float_type = tuple[float,float]
+position_int_type = tuple[int,int]
 
 class Spider(Monster):
 
-    path:list[tuple[float,float,SPIDER_DIRECTION]] # final x coord, final y coord, direction until final coord
+    path_sprite_pos:list[tuple[position_float_type,SPIDER_DIRECTION]] # final x coord, final y coord, direction until final coord
+    path_map_pos:list[tuple[position_int_type,SPIDER_DIRECTION]]
     step: int = 0
 
-    def __init__(self,spider_pos:tuple[int,int], game_map:Map, spider_sprite: Sprite)->None:
+    def __init__(self,spider_pos:position_int_type, game_map:Map, spider_sprite: Sprite)->None:
         self.monster_sprite = spider_sprite
         self.__change_direction__(SPIDER_DIRECTION.RIGHT)
-        self.path = [self.__convert_to_coord__(spider_pos,SPIDER_DIRECTION.RIGHT)]
+        self.path_sprite_pos = []
+        self.path_map_pos = []
+        (path_over,direction) = self.__continue_path__(spider_pos,SPIDER_DIRECTION.RIGHT,game_map)
+        while not path_over :
+            (path_over,direction)=self.__continue_path__(self.path_map_pos[-1][0],direction,game_map)
+        self.__build_path_coord__()
 
-    def __continue_path__(self,)->None:
-        pass
-        """(start,direction) = self.path[-1][0]
-        need_to_look:tuple[tuple[int,int],tuple[int,int]]
-        match direction:
-            case SPIDER_DIRECTION.RIGHT:need_to_look = ((1,1),(1,0))
-            case SPIDER_DIRECTION.UP:need_to_look = (0,1)
-            case SPIDER_DIRECTION.LEFT:need_to_look = (-1,0)
-            case SPIDER_DIRECTION.DOWN: need_to_look = (0,1)
-        walk_lenght = 0"""
+    def __continue_path__(self,pos:position_int_type,direction:SPIDER_DIRECTION,map:Map)->tuple[bool,SPIDER_DIRECTION]:
+        current_pos = pos
+        while not self.__bloc_in_front__(current_pos,direction,map,False) and self.__bloc_in_front__(current_pos,direction,map,True):
+            current_pos = self.__move_to__(current_pos,direction)
+        
+        if self.__bloc_in_front__(current_pos,direction,map,False):
+            new_dir = self.__perp__(direction)
+        else: 
+            new_dir = self.__perp__(direction,up = False)
+            current_pos = self.__move_to__(current_pos,direction)
 
+        if len(self.path_map_pos) > 0:
+            if current_pos == self.path_map_pos[0][0]: return (True,new_dir)
+        self.path_map_pos.append((current_pos,direction))
+        return (False,new_dir)
 
+    def __bloc_in_front__(self,pos:position_int_type,dir:SPIDER_DIRECTION ,map:Map, bellow:bool)->bool:
+        if bellow:offset = -1
+        else: offset = 0
 
-    def __convert_to_coord__(self,pos:tuple[int,int],dir:SPIDER_DIRECTION)->tuple[float,float,SPIDER_DIRECTION]:
-        dist_from_Wall = self.monster_sprite.height/2
         match dir:
-            case SPIDER_DIRECTION.RIGHT: return(SPRITE_SIZE*(1+pos[0])-dist_from_Wall,SPRITE_SIZE*pos[1]+dist_from_Wall,dir)
-            case SPIDER_DIRECTION.UP: return(SPRITE_SIZE*(1+pos[0])-dist_from_Wall,SPRITE_SIZE*(1+pos[1])-dist_from_Wall,dir)
-            case SPIDER_DIRECTION.LEFT: return(SPRITE_SIZE*pos[0]+dist_from_Wall,SPRITE_SIZE*(1+pos[1])-dist_from_Wall,dir)
-            case SPIDER_DIRECTION.DOWN: return(SPRITE_SIZE*pos[0]+dist_from_Wall,SPRITE_SIZE*pos[1]+dist_from_Wall,dir)
+            case SPIDER_DIRECTION.RIGHT:need_to_look = (pos[0]+1,pos[1]+offset)
+            case SPIDER_DIRECTION.UP:need_to_look = (pos[0]-offset,pos[1]+1)
+            case SPIDER_DIRECTION.LEFT:need_to_look = (pos[0]-1,pos[1]-offset)
+            case SPIDER_DIRECTION.DOWN: need_to_look = (pos[0]+offset,pos[1]-1)
+        caracter = map.ShowPosition(need_to_look)
+        if caracter in map.caracters:
+            if map.caracters[map.ShowPosition(need_to_look)] in SPIDER_CAN_GO: return True
+        return False
 
-    def __close_enough__(self,pos1:tuple[float,float],pos2:tuple[float,float])->bool:
-        return (abs(pos1[1]-pos2[1]) < 1 and abs(pos1[0]-pos2[0]) < 1)
+    def __close_enough__(self,pos1:position_float_type, pos2:position_float_type)->bool:
+        return (abs(pos1[1]-pos2[1]) < SPIDER_SPEED and abs(pos1[0]-pos2[0]) < SPIDER_SPEED)
 
     def move(self)->None:
         self.monster_sprite.update()
         pos = (self.monster_sprite.center_x,self.monster_sprite.center_y)
-        end = (self.path[self.step][0],self.path[self.step][1])
+        end = (self.path_sprite_pos[self.step][0][0],self.path_sprite_pos[self.step][0][1])
         if self.__close_enough__(pos,end):
-            self.step = (self.step + 1) % len(self.path)
-            self.__change_direction__(self.path[self.step][2])
+            self.step = (self.step + 1) % len(self.path_sprite_pos)
+            self.__change_direction__(self.path_sprite_pos[self.step][1])
+
+    def __build_path_coord__(self)->None:
+        segment_amount = len(self.path_map_pos)
+        for i in range(segment_amount):
+            segment = self.path_map_pos[i]
+            self.path_sprite_pos.append(self.__convert_to_coord__(
+                segment[0],segment[1],self.__is_perp__(segment[1],self.path_map_pos[(i+1)%segment_amount][1])))
+
+    def __perp__(self,dir:SPIDER_DIRECTION,up:bool=True)->SPIDER_DIRECTION:
+        if up:
+            match dir:
+                case SPIDER_DIRECTION.RIGHT: return SPIDER_DIRECTION.UP
+                case SPIDER_DIRECTION.UP: return SPIDER_DIRECTION.LEFT
+                case SPIDER_DIRECTION.LEFT: return SPIDER_DIRECTION.DOWN
+                case SPIDER_DIRECTION.DOWN: return SPIDER_DIRECTION.RIGHT 
+        else:
+            match dir:
+                case SPIDER_DIRECTION.RIGHT: return SPIDER_DIRECTION.DOWN
+                case SPIDER_DIRECTION.UP: return SPIDER_DIRECTION.RIGHT
+                case SPIDER_DIRECTION.LEFT: return SPIDER_DIRECTION.UP
+                case SPIDER_DIRECTION.DOWN: return SPIDER_DIRECTION.LEFT
+
+    def __is_perp__(self,dir:SPIDER_DIRECTION,dir_to_check:SPIDER_DIRECTION,up:bool=True)->bool:
+        return dir_to_check == self.__perp__(dir,up=up)        
+
+    def __move_to__(self,pos:position_int_type,dir:SPIDER_DIRECTION)->position_int_type:
+        match dir:
+            case SPIDER_DIRECTION.RIGHT: return(pos[0]+1,pos[1])
+            case SPIDER_DIRECTION.UP: return (pos[0],pos[1]+1)
+            case SPIDER_DIRECTION.LEFT: return (pos[0]-1,pos[1])
+            case SPIDER_DIRECTION.DOWN: return (pos[0],pos[1]-1)
+
+    def __convert_to_coord__(self,pos:position_int_type,dir:SPIDER_DIRECTION, go_up:bool = True)->tuple[position_float_type,SPIDER_DIRECTION]:
+        dist_from_wall = self.monster_sprite.height/2
+        up_factor = SPRITE_SIZE/2 - dist_from_wall
+        if not go_up:up_factor = -up_factor
+
+        match dir:
+            case SPIDER_DIRECTION.RIGHT: return((SPRITE_SIZE*(1/2+pos[0])+up_factor,SPRITE_SIZE*pos[1]+dist_from_wall),dir)
+            case SPIDER_DIRECTION.UP: return((SPRITE_SIZE*(1+pos[0])-dist_from_wall,SPRITE_SIZE*(1/2+pos[1])+up_factor),dir)
+            case SPIDER_DIRECTION.LEFT: return((SPRITE_SIZE*(1/2 + pos[0])-up_factor,SPRITE_SIZE*(1+pos[1])-dist_from_wall),dir)
+            case SPIDER_DIRECTION.DOWN: return((SPRITE_SIZE*pos[0]+dist_from_wall,SPRITE_SIZE*(1/2+pos[1])-up_factor),dir)
 
     def __change_direction__(self,new_direction:SPIDER_DIRECTION)->None:
         speed_and_angle:tuple[int,int,int]
         match new_direction:
-            case SPIDER_DIRECTION.RIGHT: speed_and_angle = (1,0,0)
-            case SPIDER_DIRECTION.UP: speed_and_angle =    (0,1,-90)
-            case SPIDER_DIRECTION.LEFT: speed_and_angle =  (-1,0,180)
-            case SPIDER_DIRECTION.DOWN: speed_and_angle =  (0,-1,90)
+            case SPIDER_DIRECTION.RIGHT: speed_and_angle = (SPIDER_SPEED,0,0)
+            case SPIDER_DIRECTION.UP: speed_and_angle =    (0,SPIDER_SPEED,-90)
+            case SPIDER_DIRECTION.LEFT: speed_and_angle =  (-SPIDER_SPEED,0,180)
+            case SPIDER_DIRECTION.DOWN: speed_and_angle =  (0,-SPIDER_SPEED,90)
         (self.monster_sprite.change_x, self.monster_sprite.change_y, self.monster_sprite.angle) = speed_and_angle     
