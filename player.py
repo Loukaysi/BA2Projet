@@ -1,7 +1,8 @@
-import arcade
-from arcade import Sprite, SpriteList
+from arcade import Sprite, SpriteList, Camera2D
 from weapon import Weapon, Weapon_index
 from weapon import Sword, Bow, Arrow
+
+TRUE_SCALE = 0.5
 
 class Player:
     sprite:Sprite
@@ -11,8 +12,6 @@ class Player:
     weapon:Weapon
     arrow_list:list[Arrow]
 
-    arrow_sprite_list:SpriteList[Sprite]
-    weapon_sprite_list:SpriteList[Sprite]
     sprites_to_draw:SpriteList[Sprite]
 
     gravity:float
@@ -22,16 +21,14 @@ class Player:
     score:int
 
     def __init__(self,scale:float=1,active_weapon:Weapon_index=Weapon_index.SWORD,
-                 gravity:float=1,jump_speed:float=21,horizontal_speed:float=5,score:int=0)->None:
+                 gravity:float=1,jump_speed:float=20,horizontal_speed:float=5,score:int=0)->None:
         self.scale = scale
         self.active_weapon = active_weapon
-        self. gravity = gravity
+        self.gravity = gravity
         self.jump_speed = jump_speed
         self.horizontal_speed = horizontal_speed
         self.score = score
-        self.weapon_sprite_list = SpriteList(use_spatial_hash=True)
         self.sprites_to_draw = SpriteList(use_spatial_hash=True)
-        self.arrow_sprite_list = SpriteList(use_spatial_hash=True)
         self.arrow_list = []
 
     def jump(self)->None:
@@ -46,31 +43,53 @@ class Player:
     def move_left(self)->None:
         self.sprite.change_x = -self.horizontal_speed
 
+    def create_weapon(self,relative_aim:tuple[float|int,float|int])->None:
+        match self.active_weapon:
+            case Weapon_index.SWORD:self.weapon = Sword(self.sprite.position,relative_aim,scale=self.scale)
+            case Weapon_index.BOW:
+                self.weapon = Bow(self.sprite.position,relative_aim,scale=self.scale)
+                self.shoot_arrow(Arrow(self.sprite.position,relative_aim,scale=self.scale))
+        self.sprites_to_draw.append(self.weapon.weapon_sprite)
+
     def move_weapon(self)->None:
         try:
-            self.weapon.move()
+            self.weapon.move(position=self.sprite.position)
         except:
             pass
 
         for arrow in self.arrow_list:
             arrow.move()
+            if arrow.weapon_sprite.position[1]< 0: self.__remove_arrow__(arrow)
 
-    def weapon_hit(self,collision_with:SpriteList[Sprite])->SpriteList:
-        return arcade.check_for_collision_with_list
+    def weapon_hit(self,collision_with:SpriteList[Sprite])->SpriteList[Sprite]:
+        try: return self.weapon.hit(collision_with)
+        except: return SpriteList(lazy=True)
+
+    def arrows_hit(self,collision_with:SpriteList[Sprite])->SpriteList[Sprite]:
+        total_hits:SpriteList[Sprite] = SpriteList(lazy=True)
+        for arrow in self.arrow_list:
+            arrow_hits = arrow.hit(collision_with)
+            if len(arrow_hits) > 0: self.__remove_arrow__(arrow)
+            total_hits.extend(arrow_hits)  
+        return total_hits
+
+    def __remove_arrow__(self,arrow:Arrow)->None:
+        if arrow in self.arrow_list: self.arrow_list.remove(arrow)
+        arrow.weapon_sprite.kill()
 
     def shoot_arrow(self,arrow:Arrow)->None:
         self.arrow_list.append(arrow)
-        self.arrow_sprite_list.append(arrow.weapon_sprite)
+        self.sprites_to_draw.append(arrow.weapon_sprite)
 
     def toggle_weapon(self)->None:
         match self.active_weapon:
-            case Weapon_index.SWORD:
-                self.active_weapon = Weapon_index.BOW # Switch to the bow
-            case Weapon_index.BOW:
-                self.active_weapon = Weapon_index.SWORD # Swicth to the sword
+            case Weapon_index.SWORD: self.active_weapon = Weapon_index.BOW # Switch to the bow
+            case Weapon_index.BOW: self.active_weapon = Weapon_index.SWORD # Swicth to the sword
 
-    def cheat(self)->None:
-        self.sprites_to_draw.append(self.sprite)
+    def assign_sprite(self,sprite:Sprite)->None:
+        self.sprite = sprite
+        self.sprite.scale = (self.scale*TRUE_SCALE,self.scale*TRUE_SCALE)
+        self.sprites_to_draw.append(sprite)
 
     def draw(self)->None:
         self.sprites_to_draw.draw()

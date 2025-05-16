@@ -5,6 +5,9 @@ from enum import IntEnum, auto
 ARROW_BASE_SPEED = 20
 ARROW_GRAVITY = 0.5
 
+TRUE_SCALE = 0.5
+RELATIVE_SCALE = 0.7*TRUE_SCALE
+
 class Weapon:
     """
     Abstract class for the weapons
@@ -12,25 +15,28 @@ class Weapon:
     """
     weapon_sprite: arcade.Sprite
     texture:arcade.Texture
+    scale:float
     aiming_position:tuple[float|int,float|int]
     offset_position:tuple[float|int,float|int]
     offset_angle:int
     offset_sprite_angle:float
 
-    def __init__(self, player_position:tuple[float|int,float|int],camera:arcade.camera.Camera2D, aiming_to:tuple[float|int,float|int])->None:
+    def __init__(self, player_position:tuple[float|int,float|int],relative_to_player:tuple[float|int,float|int], scale:float=1)->None:
         """
         Aims the weapon with the given parameters
         """
+        self.scale = scale
+
         # Aim the weapon
-        vect_player_click_x = aiming_to[0] + camera.position[0] -player_position[0] - self.offset_position[0] - camera.width/2
-        vect_player_click_y = aiming_to[1] + camera.position[1] -player_position[1] - self.offset_position[1] - camera.height/2
+        vect_player_click_x = relative_to_player[0] -player_position[0] - self.offset_position[0]
+        vect_player_click_y = relative_to_player[1] -player_position[1] - self.offset_position[1]
         self.aiming_position = (vect_player_click_x,vect_player_click_y)
 
         weapon_angle = math.atan2(self.aiming_position[1],self.aiming_position[0])
         self.weapon_sprite = arcade.Sprite(self.texture,
-                                          center_x=player_position[0] + self.offset_position[0] + math.cos(self.offset_sprite_angle-weapon_angle)*self.offset_angle,
-                                          center_y=player_position[1] + self.offset_position[1] + math.sin(self.offset_sprite_angle-weapon_angle)*self.offset_angle,
-                                           scale=0.5*0.7)
+                                          center_x=player_position[0] + self.scale*(self.offset_position[0] + math.cos(self.offset_sprite_angle-weapon_angle)*self.offset_angle),
+                                          center_y=player_position[1] + self.scale*(self.offset_position[1] + math.sin(self.offset_sprite_angle-weapon_angle)*self.offset_angle),
+                                           scale=RELATIVE_SCALE*self.scale)
         self.weapon_sprite.radians = self.offset_sprite_angle-weapon_angle
 
     def move(self, position:tuple[float|int,float|int] = (0,0))->None:
@@ -38,11 +44,13 @@ class Weapon:
         Move the weapon according to the player's position
         """
         player_position = position
-        self.weapon_sprite.center_x=player_position[0] + self.offset_position[0] + math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle
-        self.weapon_sprite.center_y=player_position[1] + self.offset_position[1] + math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle 
+        self.weapon_sprite.center_x=player_position[0] + self.scale*(self.offset_position[0] + math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle)
+        self.weapon_sprite.center_y=player_position[1] + self.scale*(self.offset_position[1] + math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle) 
 
     def hit(self, collision_with:arcade.SpriteList[arcade.Sprite])->arcade.SpriteList[arcade.Sprite]:
-        return arcade.check_for_collision_with_list(self.weapon_sprite,collision_with)
+        hit:arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(lazy=True)
+        hit.extend(arcade.check_for_collision_with_list(self.weapon_sprite,collision_with))
+        return hit
 
 class Sword(Weapon):
     """
@@ -50,7 +58,7 @@ class Sword(Weapon):
     Adjust position relative to the player overtime by using the ``move()`` method
     """
 
-    def __init__(self, player_position:tuple[float|int,float|int], camera:arcade.camera.Camera2D, aiming_to:tuple[float|int,float|int])-> None:
+    def __init__(self, player_position:tuple[float|int,float|int], aiming_to:tuple[float|int,float|int], scale:float = 1)-> None:
         """
         Automaticaly calls ``Weapon.init()`` with the different values to aim the sword "correctly"
         """
@@ -59,7 +67,7 @@ class Sword(Weapon):
         self.offset_sprite_angle = math.pi/4
         self.texture = arcade.load_texture("assets/kenney-voxel-items-png/sword_silver.png")
 
-        super().__init__(player_position,camera,aiming_to)
+        super().__init__(player_position,aiming_to, scale=scale)
 
 class Bow(Weapon):
     """
@@ -67,7 +75,7 @@ class Bow(Weapon):
     Adjust position relative to the player overtime by using the ``move()`` method
     """
 
-    def __init__(self, player_position:tuple[float|int,float|int], camera:arcade.camera.Camera2D, aiming_to:tuple[float|int,float|int])-> None:
+    def __init__(self, player_position:tuple[float|int,float|int], aiming_to:tuple[float|int,float|int],scale:float = 1)-> None:
         """
         Automaticaly calls ``Weapon.init()`` with the different values to aim the bow "correctly"
         """
@@ -76,7 +84,7 @@ class Bow(Weapon):
         self.offset_sprite_angle = -math.pi/4
         self.texture = arcade.load_texture("assets/kenney-voxel-items-png/bow.png")
 
-        super().__init__(player_position,camera,aiming_to)
+        super().__init__(player_position,aiming_to,scale = scale)
         
 
 class Arrow(Weapon):
@@ -86,7 +94,7 @@ class Arrow(Weapon):
     The ``move()`` method also requires the list of walls to know when the sprite should disappear
     """
 
-    def __init__(self, player_position:tuple[float|int,float|int], camera:arcade.camera.Camera2D, aiming_to:tuple[float|int,float|int])-> None:
+    def __init__(self, player_position:tuple[float|int,float|int], aiming_to:tuple[float|int,float|int],scale:float = 1)-> None:
         """
         Automaticaly calls ``Weapon.init()`` with the different values to aim the arrow "correctly"
         """
@@ -95,7 +103,7 @@ class Arrow(Weapon):
         self.offset_sprite_angle = math.pi/4
         self.texture = arcade.load_texture("assets/kenney-voxel-items-png/arrow.png")
 
-        super().__init__(player_position,camera,aiming_to)
+        super().__init__(player_position,aiming_to,scale=scale)
 
         Vector = ARROW_BASE_SPEED
 
@@ -122,9 +130,6 @@ class Arrow(Weapon):
             self.weapon_sprite.radians = self.offset_sprite_angle - math.atan2(self.weapon_sprite.change_y,self.weapon_sprite.change_x)
         else:
             self.weapon_sprite.radians = self.offset_sprite_angle
-
-        if self.weapon_sprite.position[1] < 0: # check if we are bellow the screen
-           self.weapon_sprite.kill()
 
 class Weapon_index(IntEnum):
     """

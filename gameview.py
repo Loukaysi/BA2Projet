@@ -43,12 +43,6 @@ class GameView(arcade.View):
 
     player:Player
 
-    player_sprite_list: SpriteList[Sprite]
-
-    arrow_sprite_list: SpriteList[Sprite]
-    arrow_list: list[Arrow]
-
-    active_weapon: Weapon_index
     displayed_weapon_sprite: Sprite
 
     camera: arcade.camera.Camera2D
@@ -112,10 +106,6 @@ class GameView(arcade.View):
         self.error_message = ""
         self.text_score = arcade.Text(f"coins : {self.player.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
         self.text_error = arcade.Text(self.error_message,x=30,y=self.camera.height/3*2,color=arcade.color.RED_DEVIL,font_size=25)
-        
-        # Define the arrow list
-        self.arrow_list = []
-        self.arrow_sprite_list = SpriteList(use_spatial_hash=True)
 
         self.choose_map("test_load.txt")
 
@@ -159,7 +149,6 @@ class GameView(arcade.View):
 
         self.load_display()
 
-        self.player.cheat()
 
     def load_textures(self)->None:
         """
@@ -196,11 +185,12 @@ class GameView(arcade.View):
         """
         Find the sprite of the player on the map and intialize a few variables
         """
-        self.player_sprite_list = SpriteList(use_spatial_hash=True)
-        self.load_element_in_list("player",self.player_sprite_list)
-        if len(self.player_sprite_list)!= 1:
-            raise Exception(f"There are {len(self.player_sprite_list)} players (caracter : S) on the map instead of 1")
-        self.player.sprite = self.match_caracter_sprite(self.game_map.names["player"])[0]
+        player_sprite_list:SpriteList[Sprite]=SpriteList()
+        self.load_element_in_list("player",player_sprite_list)
+        if len(player_sprite_list)!= 1:
+            raise Exception(f"There are {len(player_sprite_list)} players (caracter : S) on the map instead of 1")
+        self.player.assign_sprite(player_sprite_list[0])
+        self.display_map_sprite_list.remove(self.player.sprite) # Let the player handle itself       
 
     def load_plateform(self)->None:
         """
@@ -445,23 +435,18 @@ class GameView(arcade.View):
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
                 # Aim and create the weapon 
-                match self.player.active_weapon:
-                    case Weapon_index.SWORD:
-                        self.player.weapon = Sword(self.player.sprite.position,self.camera,(x,y))
-                        self.player.sprites_to_draw.append(self.player.weapon.weapon_sprite)
-                        # check to kill monsters
-                        Monster_Touched : list[Sprite]
-                        Monster_Touched = arcade.check_for_collision_with_list(self.player.weapon.weapon_sprite, self.monster_sprite_list)
-                        for monster in Monster_Touched:
-                            arcade.play_sound(self.sound_dict["MonsterKilled"])
-                            monster.kill()
-                        self.trigger_switches(set(arcade.check_for_collision_with_list(self.player.weapon.weapon_sprite, self.switch_sprite_list)))
-                    case Weapon_index.BOW:
-                        self.player.weapon = Bow(self.player.sprite.position,self.camera,(x,y))
-                        # Spawn an arrow
-                        self.player.shoot_arrow(Arrow(self.player.sprite.position,self.camera,(x,y)))
-
-                self.player_sprite_list.append(self.player.weapon.weapon_sprite)
+                relative_click_x = x + self.camera.position[0] - self.camera.width/2
+                relative_click_y = y + self.camera.position[1] - self.camera.height/2
+                relative_click = (relative_click_x,relative_click_y)
+                self.player.create_weapon(relative_click)
+                if self.player.active_weapon == Weapon_index.SWORD:
+                    # check to kill monsters
+                    Monster_Touched : list[Sprite]
+                    Monster_Touched = arcade.check_for_collision_with_list(self.player.weapon.weapon_sprite, self.monster_sprite_list)
+                    for monster in Monster_Touched:
+                        arcade.play_sound(self.sound_dict["MonsterKilled"])
+                        monster.kill()
+                    self.trigger_switches(set(arcade.check_for_collision_with_list(self.player.weapon.weapon_sprite, self.switch_sprite_list)))
 
             case arcade.MOUSE_BUTTON_RIGHT:
                 self.player.toggle_weapon()
@@ -510,8 +495,6 @@ class GameView(arcade.View):
 
         self.move_monsters()
 
-        self.collision_with_switch()
-
         self.collision_with_coin()
 
         self.collision_with_lava()
@@ -553,25 +536,24 @@ class GameView(arcade.View):
         """
         Move the weapons (i.e. sword, bow, arrows, ...) of the player
         """
-        try: # we don't know if the weapon exists
-            self.player.weapon.move(position=self.player.sprite.position)
-        except:
-            pass
+        self.player.move_weapon()
 
-        
+        # Check if the arrows hit anything and act accordingly
+        self.player.arrows_hit(self.wall_sprite_list)
+        self.player.arrows_hit(self.plateform_solid_sprite_list)
+        self.player.arrows_hit(self.no_go_sprite_list)
 
-        # move the arrows
-        for arrow in self.player.arrow_list:
-            arrow.move((0,0),wall = self.wall_sprite_list,plateforms=self.plateform_solid_sprite_list,no_go =self.no_go_sprite_list)
-            if arrow.weapon_sprite in self.arrow_sprite_list:
-                enemies_touched = arcade.check_for_collision_with_list(arrow.weapon_sprite,self.monster_sprite_list)
-                if len(enemies_touched) != 0:
-                    arrow.weapon_sprite.kill()
-                    self.arrow_list.remove(arrow)
-                for enemy in enemies_touched:
-                    enemy.kill()
-            else:
-                self.player.arrow_list.remove(arrow)
+        enemies_touched = self.player.arrows_hit(self.monster_sprite_list)
+        switch_touched = self.player.arrows_hit(self.switch_sprite_list)
+
+        for enemy in enemies_touched: #FAUT SUPPRIMER L'OBJET MONSTER CORRESPONDANT
+            enemy.kill()
+            arcade.play_sound(self.sound_dict["MonsterKilled"])
+
+        for switch in self.switch_list:
+            if switch.sprite in switch_touched: switch.trigger_actions()
+
+
     def move_monsters(self)->None:
         """
         Move the monsters on the map
@@ -582,21 +564,6 @@ class GameView(arcade.View):
             else:
                 self.monster_list.remove(monster)
                 del monster
-
-    def collision_with_switch(self)->None:
-        """
-        Check for any collision between the arrows and the switches
-        Note : The sword is considered "inactive" even it stays on the screen so we don't consider it
-        """
-        switch_touched:set[Sprite] = set()
-        for arrow in self.arrow_list:
-            switch_touched = switch_touched.union(arcade.check_for_collision_with_list(arrow.weapon_sprite,self.switch_sprite_list))
-            for switch in self.switch_list:
-                    if switch.sprite in switch_touched:
-                        switch.trigger_actions()
-                        arrow.weapon_sprite.kill()
-        #ATTENTION LES FLECHES SONT TOUTE SUPPRIMEES QUAND UNE TOUCHE UN LEVIER 
-        #switch_touched:list[tuple[Sprite,Switch]] = [(sprite,switch)]
 
     def collision_with_coin(self)->None:
         """
@@ -674,7 +641,6 @@ class GameView(arcade.View):
 
         with self.camera.activate():
             self.player.draw()
-            self.arrow_sprite_list.draw()
             self.display_map_sprite_list.draw()
                      
         with self.display_camera.activate(): # display the texts and  the player weapon
