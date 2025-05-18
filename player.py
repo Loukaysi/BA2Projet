@@ -1,6 +1,7 @@
-from arcade import Sprite, SpriteList, Camera2D
+from arcade import Sprite, SpriteList, SpriteSequence
 from weapon import Weapon, Weapon_index
 from weapon import Sword, Bow, Arrow
+import arcade
 
 TRUE_SCALE = 0.5
 
@@ -49,37 +50,30 @@ class Player:
             case Weapon_index.BOW:
                 self.weapon = Bow(self.sprite.position,relative_aim,scale=self.scale)
                 self.shoot_arrow(Arrow(self.sprite.position,relative_aim,scale=self.scale))
-        self.sprites_to_draw.append(self.weapon.weapon_sprite)
+        self.sprites_to_draw.append(self.weapon)
 
     def move_weapon(self)->None:
-        try:
-            self.weapon.move(position=self.sprite.position)
-        except:
-            pass
+        if hasattr(self,'weapon') : self.weapon.move(position=self.sprite.position)
 
         for arrow in self.arrow_list:
             arrow.move()
-            if arrow.weapon_sprite.position[1]< 0: self.__remove_arrow__(arrow)
+            if arrow.position[1]< 0: self.__remove_arrow__(arrow)
 
-    def weapon_hit(self,collision_with:SpriteList[Sprite])->SpriteList[Sprite]:
-        try: return self.weapon.hit(collision_with)
-        except: return SpriteList(lazy=True)
-
-    def arrows_hit(self,collision_with:SpriteList[Sprite])->SpriteList[Sprite]:
-        total_hits:SpriteList[Sprite] = SpriteList(lazy=True)
+    def arrows_hit(self,collision_with:SpriteSequence[Sprite])->list[Sprite]:
+        total_hits:list[Sprite] = []
         for arrow in self.arrow_list:
-            arrow_hits = arrow.hit(collision_with)
+            arrow_hits = arcade.check_for_collision_with_list(arrow,collision_with)
             if len(arrow_hits) > 0: self.__remove_arrow__(arrow)
             total_hits.extend(arrow_hits)  
         return total_hits
 
     def __remove_arrow__(self,arrow:Arrow)->None:
         if arrow in self.arrow_list: self.arrow_list.remove(arrow)
-        arrow.weapon_sprite.kill()
+        arrow.kill()
 
     def shoot_arrow(self,arrow:Arrow)->None:
         self.arrow_list.append(arrow)
-        self.sprites_to_draw.append(arrow.weapon_sprite)
+        self.sprites_to_draw.append(arrow)
 
     def toggle_weapon(self)->None:
         match self.active_weapon:

@@ -1,6 +1,6 @@
 import arcade
 import cProfile
-from arcade import Sprite, SpriteList
+from arcade import Sprite, SpriteList, SpriteSequence
 from typing import Mapping
 from map import Map
 from monster import Monster, Slime, Bat, Spider
@@ -9,6 +9,10 @@ from weapon import Sword, Bow, Arrow
 from plateform import Plateform, create_plateforms
 from switch import Switch, Gate
 from player import Player
+from portal import Portal
+from typing import Sequence
+
+#Il ne faut pas appeler `update()` sur la SpriteList qui contient les `platforms` que vous donnez au physics engine. Ce dernier fait déjà l'équivalent d'update sur celles-ci. Si vous le faites, le symptôme que vous obtiendrez est que la joueuse "glisse" sur les plateformes en mouvement.
 
 PLAYER_MOVEMENT_SPEED = 7
 # Lateral speed of the player, in pixels per frame.
@@ -33,7 +37,7 @@ WALLS = ("full_grass","half_grass","box","gate")
 MISCELLANEOUS = ("lava","exit","coin","lever","gate")
 ENEMIES = ("slime","bat","spider")
 WEAPONS = ("sword","bow","arrow")
-ROGUE_BLOCS = ("lever","lava","exit")
+ROGUE_BLOCS = ("lever","lava","exit","portal")
 
 MOVING_SPEED = 1
 
@@ -54,18 +58,19 @@ class GameView(arcade.View):
     wall_sprite_list: SpriteList[Sprite]
     plateform_solid_sprite_list: SpriteList[Sprite]
     plateform_permeable_sprite_list:SpriteList[Sprite]
+
     no_go_sprite_list: SpriteList[Sprite]
     coin_sprite_list: SpriteList[Sprite]
     exit_sprite_list: SpriteList[Sprite]
 
     switch_sprite_list:SpriteList[Sprite]
     switch_list:list[Switch]
-    gate_sprite_list:SpriteList[Sprite]
-    gate_list:list[Gate]
-    gate_dict:dict[tuple[int,int],Gate]
+    gate_list:SpriteList[Gate]
 
-    monster_sprite_list: SpriteList[Sprite]
-    monster_list: list[Monster]
+    portal_sprite_list:SpriteList[Sprite]
+    portal_list:list[Portal]
+
+    monster_list: SpriteList[Monster]
 
     held_keys: set[int]
     physics_engine: arcade.PhysicsEnginePlatformer
@@ -123,30 +128,15 @@ class GameView(arcade.View):
     def Load_Map(self)->None:
 
         self.load_textures()
-
         self.load_sounds()
-
         self.load_player()
-
         self.load_plateform()
-
         self.load_walls()
-
-        # Make the lists for the lava, exit, and coins
-        self.no_go_sprite_list = SpriteList(use_spatial_hash=True)
-        self.coin_sprite_list = SpriteList(use_spatial_hash=True)
-        self.exit_sprite_list = SpriteList(use_spatial_hash=True)
-
-        self.load_element_in_list("lava",self.no_go_sprite_list)
-        self.load_element_in_list("coin",self.coin_sprite_list)
-        self.load_element_in_list("exit",self.exit_sprite_list)
-
+        self.load_miscellaneous()
         self.load_monster()
-
         self.load_gate_and_switch()
-
+        self.load_portal()
         self.load_physics()
-
         self.load_display()
 
 
@@ -168,7 +158,7 @@ class GameView(arcade.View):
                                                     for line_number,line in enumerate(self.game_map.MapString )
                                                     for caracter_number, caracter in enumerate(line)
                                                     if caracter in self.game_map.caracters])
-
+    # Probablement faire une fonction qui charge le bon type de sprite en fonction du caractère
     def load_sounds(self) -> None:
         """
         Load the wanted sounds for the current map (sounds may be customised using packs)
@@ -190,6 +180,7 @@ class GameView(arcade.View):
         if len(player_sprite_list)!= 1:
             raise Exception(f"There are {len(player_sprite_list)} players (caracter : S) on the map instead of 1")
         self.player.assign_sprite(player_sprite_list[0])
+        #self.substitute("player",self.player.sprite)
         self.display_map_sprite_list.remove(self.player.sprite) # Let the player handle itself       
 
     def load_plateform(self)->None:
@@ -198,8 +189,9 @@ class GameView(arcade.View):
         Create the lists that will contain the moving blocs
         """
         # No need to check for exceptions as they are handled by the "Create plateform method"
-        self.plateform_solid_sprite_list = SpriteList(use_spatial_hash=True)
-        self.plateform_permeable_sprite_list = SpriteList(use_spatial_hash=True)
+        # arcade recommends turning spatial hash off for moving blocs
+        self.plateform_solid_sprite_list = SpriteList(use_spatial_hash=False)
+        self.plateform_permeable_sprite_list = SpriteList(use_spatial_hash=False) 
         plateforms = create_plateforms(self.game_map)
         for plateform in plateforms:
             self.load_single_plateform(plateform)
@@ -256,34 +248,48 @@ class GameView(arcade.View):
         """
         list.extend(self.match_caracter_sprite(self.game_map.names[element]))
 
+    def load_miscellaneous(self)->None:
+        self.no_go_sprite_list = SpriteList(use_spatial_hash=True)
+        self.coin_sprite_list = SpriteList(use_spatial_hash=True)
+        self.exit_sprite_list = SpriteList(use_spatial_hash=True)
+
+        self.load_element_in_list("lava",self.no_go_sprite_list)
+        self.load_element_in_list("coin",self.coin_sprite_list)
+        self.load_element_in_list("exit",self.exit_sprite_list)
+
     def load_monster(self)->None:
         """
         Initialise the lists for the monsters
         """
-        self.monster_list = [Slime(pos,self.game_map,self.match_position_sprite([pos])[0]) 
-                             for pos in self.game_map.FindElement(self.game_map.names["slime"])]
+        self.monster_list = SpriteList(use_spatial_hash=True)
+
+        slime_pos = self.game_map.FindElement(self.game_map.names["slime"])
+        slime_sprite = self.match_position_sprite(slime_pos)
+        slime_pos_sprite = zip(slime_pos,slime_sprite)
+        self.monster_list.extend([Slime(pos,self.game_map, sprite) for (pos,sprite) in slime_pos_sprite])
         
-        spiders = [(pos,self.game_map,self.match_position_sprite([pos])[0]) 
-                             for pos in self.game_map.FindElement(self.game_map.names["spider"])]
-        self.monster_list.extend([Spider(spider[0],spider[1],spider[2]) for spider in spiders])
+        spider_pos = self.game_map.FindElement(self.game_map.names["spider"])
+        spider_sprite = self.match_position_sprite(spider_pos)
+        spider_pos_sprite = zip(spider_pos,spider_sprite)
+        self.monster_list.extend([Spider(pos,self.game_map, sprite) for (pos,sprite) in spider_pos_sprite])
         # fix the spiders position (they spawn in the air facing left otherwise)
-        for spider in spiders : 
-            sprite = spider[2]
-            sprite.texture = sprite.texture.flip_horizontally()
-            sprite.center_y -= (SPRITE_SIZE - sprite.height)/2
+        for spider in self.monster_list: 
+            if isinstance(spider,Spider):
+                spider.texture = spider.texture.flip_horizontally()
+                spider.center_y -= (SPRITE_SIZE - spider.height)/2
+
         self.monster_list.extend([Bat(bat) for bat in self.match_caracter_sprite(self.game_map.names["bat"])])
 
-        self.monster_sprite_list= SpriteList(use_spatial_hash=True)
-        self.monster_sprite_list.extend([monster.monster_sprite for monster in self.monster_list])
+        self.substitute(("slime","spider","bat"),self.monster_list)
 
     def load_gate_and_switch(self)->None:
         """
         Calls ``load_gate()`` then ``load_switch()`` to ensure that every ``Gate`` object has been initialised 
         """
-        self.load_gate()
-        self.load_switch()
+        gate_dict = self.load_gate()
+        self.load_switch(gate_dict)
 
-    def load_gate(self)->None:
+    def load_gate(self)->dict[tuple[int,int],Gate]:
         """
         Initialise the ``Gate`` objects 
 
@@ -292,12 +298,12 @@ class GameView(arcade.View):
         which is initialised in this method
         !!
         """
-        self.gate_sprite_list = SpriteList(use_spatial_hash=True)
-        self.gate_list = []
+
+        self.gate_list = SpriteList(use_spatial_hash=True)
         gate_positions = self.game_map.FindElement(self.game_map.names["gate"])
         gate_sprites = self.match_position_sprite(gate_positions)
         gate_sprite_position = dict(zip(gate_positions,gate_sprites))
-        self.gate_dict = {}
+        gate_dict:dict[tuple[int,int],Gate] = {}
 
         if 'gates' in self.game_map.config:
             gates = self.game_map.config['gates']
@@ -310,17 +316,18 @@ class GameView(arcade.View):
                         case 'open': opened = True
                         case 'closed': opened = False
                     sprite = gate_sprite_position[position]
-                    self.gate_dict[position] = Gate(sprite,position,opened)
-                    self.gate_sprite_list.append(sprite)
-                    self.gate_list.append(self.gate_dict[position])
-        for pos,sprite in gate_sprite_position.items():
-            if sprite not in self.gate_sprite_list:
-                self.gate_sprite_list.append(sprite)
-                self.gate_dict[pos] = Gate(sprite,pos,False)
-                self.gate_list.append(self.gate_dict[pos])
-            # TRASNFORMER TOUTES LES LISTES EN DICTIONNAIRE EST UNE BONNE IDEE 
+                    gate_dict[position] = Gate(sprite,position,opened)
+                    self.gate_list.append(gate_dict[position])
 
-    def load_switch(self)->None:
+        for pos,sprite in gate_sprite_position.items():
+            if pos not in gate_dict:
+                gate_dict[pos] = Gate(sprite,pos,False)
+                self.gate_list.append(gate_dict[pos])
+
+        self.substitute("gate",self.gate_list)
+        return gate_dict
+
+    def load_switch(self, gate_dict:dict[tuple[int,int],Gate])->None:
         """
         Initialise the ``Switch`` objects 
 
@@ -354,9 +361,41 @@ class GameView(arcade.View):
 
                         sprite.append_texture(arcade.load_texture(":resources:/images/tiles/leverRight.png"))
                         self.switch_sprite_list.append(sprite)
-                        self.switch_list.append(Switch(sprite, state = state, gates=self.gate_dict,
+                        self.switch_list.append(Switch(sprite, state = state, gates=gate_dict,
                                                        switch_off_actions=switch_off_actions,
                                                        switch_on_actions=switch_on_actions))
+
+    def load_portal(self)->None:
+        pass
+        """
+        Initialise the ``Portal`` objects 
+        """
+        """self.portal_sprite_list = SpriteList(use_spatial_hash=True)
+        self.portal_list = []
+        portal_positions = self.game_map.FindElement(self.game_map.names["gate"])
+        portal_sprites = self.match_position_sprite(portal_positions)
+        gate_sprite_position = dict(zip(gate_positions,gate_sprites))
+        self.gate_dict = {}
+
+        if 'portals' in self.game_map.config:
+            gates = self.game_map.config['portals']
+            if isinstance(gates,list):
+                for gate in gates:
+                    position = (int(gate['x']), int(gate['y']))
+                    state_str:str = gate['state']
+                    opened:bool = False
+                    match state_str:
+                        case 'open': opened = True
+                        case 'closed': opened = False
+                    sprite = gate_sprite_position[position]
+                    self.gate_dict[position] = Gate(sprite,position,opened)
+                    self.gate_sprite_list.append(sprite)
+                    self.gate_list.append(self.gate_dict[position])
+        for pos,sprite in gate_sprite_position.items():
+            if sprite not in self.gate_sprite_list:
+                self.gate_sprite_list.append(sprite)
+                self.gate_dict[pos] = Gate(sprite,pos,False)
+                self.gate_list.append(self.gate_dict[pos])"""
 
     def load_physics(self)->None:
         """
@@ -382,6 +421,24 @@ class GameView(arcade.View):
 
         self.display_sprite_list = SpriteList(use_spatial_hash=True)
         self.display_sprite_list.append(self.displayed_weapon_sprite) 
+
+    def substitute(self,deleted_elements:Sequence[str]|str,subbed_elements:SpriteSequence[Sprite]|Sprite)->None:
+        """
+        Take away the `deleted_elements` from `self.map_display_sprite_list` and add the `subbed_elements` instead
+        """
+        # make the elements into ones we can iterate on
+        if isinstance(deleted_elements,str):deleted_elements = [deleted_elements]
+
+        unwanted_stuff:SpriteList[Sprite] = SpriteList(lazy=True)
+        for unwanted_type in deleted_elements:
+            unwanted_stuff.extend(self.match_caracter_sprite(self.game_map.names[unwanted_type]))
+
+        for unwanted in unwanted_stuff :
+            if unwanted in self.display_map_sprite_list:self.display_map_sprite_list.remove(unwanted) 
+
+        if isinstance(subbed_elements,Sprite):self.display_map_sprite_list.append(subbed_elements)
+        else:self.display_map_sprite_list.extend([wanted for wanted in subbed_elements])
+
 
     def match_caracter_sprite(self, element:str)->SpriteList[Sprite]:
         """
@@ -442,11 +499,11 @@ class GameView(arcade.View):
                 if self.player.active_weapon == Weapon_index.SWORD:
                     # check to kill monsters
                     Monster_Touched : list[Sprite]
-                    Monster_Touched = arcade.check_for_collision_with_list(self.player.weapon.weapon_sprite, self.monster_sprite_list)
+                    Monster_Touched = arcade.check_for_collision_with_list(self.player.weapon, self.monster_list)
                     for monster in Monster_Touched:
                         arcade.play_sound(self.sound_dict["MonsterKilled"])
                         monster.kill()
-                    self.trigger_switches(set(arcade.check_for_collision_with_list(self.player.weapon.weapon_sprite, self.switch_sprite_list)))
+                    self.trigger_switches(set(arcade.check_for_collision_with_list(self.player.weapon, self.switch_sprite_list)))
 
             case arcade.MOUSE_BUTTON_RIGHT:
                 self.player.toggle_weapon()
@@ -463,7 +520,7 @@ class GameView(arcade.View):
         match button:
             case arcade.MOUSE_BUTTON_LEFT:
                 try:
-                    self.player.weapon.weapon_sprite.kill()
+                    self.player.weapon.kill()
                     del self.player.weapon
                 except:
                     pass
@@ -485,22 +542,16 @@ class GameView(arcade.View):
                 case arcade.key.RIGHT: self.player.move_right()
                 case arcade.key.LEFT: self.player.move_left()
 
-        self.move_fake_plateforms()
-
         self.physics_engine.update()
 
+        self.move_fake_plateforms()
         self.move_camera()
-
         self.move_weapons()
-
         self.move_monsters()
 
         self.collision_with_coin()
-
         self.collision_with_lava()
-
         self.collisions_with_exit()
-
         self.collisions_with_monster() 
 
     def move_fake_plateforms(self)->None:
@@ -543,27 +594,22 @@ class GameView(arcade.View):
         self.player.arrows_hit(self.plateform_solid_sprite_list)
         self.player.arrows_hit(self.no_go_sprite_list)
 
-        enemies_touched = self.player.arrows_hit(self.monster_sprite_list)
+        enemies_touched = self.player.arrows_hit(self.monster_list)
         switch_touched = self.player.arrows_hit(self.switch_sprite_list)
 
-        for enemy in enemies_touched: #FAUT SUPPRIMER L'OBJET MONSTER CORRESPONDANT
+        for enemy in enemies_touched:
             enemy.kill()
             arcade.play_sound(self.sound_dict["MonsterKilled"])
 
         for switch in self.switch_list:
             if switch.sprite in switch_touched: switch.trigger_actions()
 
-
     def move_monsters(self)->None:
         """
         Move the monsters on the map
         """
         for monster in self.monster_list:
-            if(monster.monster_sprite in self.monster_sprite_list):
-                monster.move()
-            else:
-                self.monster_list.remove(monster)
-                del monster
+            monster.move()
 
     def collision_with_coin(self)->None:
         """
@@ -605,7 +651,7 @@ class GameView(arcade.View):
         """
         Check for collisions with monsters and kill the player if so
         """
-        if len(arcade.check_for_collision_with_list(self.player.sprite, self.monster_sprite_list)) != 0:
+        if len(arcade.check_for_collision_with_list(self.player.sprite, self.monster_list)) != 0:
             self.game_over()
 
     def trigger_switches(self,switches:set[Sprite])->None:
@@ -640,8 +686,8 @@ class GameView(arcade.View):
         self.clear()
 
         with self.camera.activate():
-            self.player.draw()
             self.display_map_sprite_list.draw()
+            self.player.draw()
                      
         with self.display_camera.activate(): # display the texts and  the player weapon
             self.text_score.draw()

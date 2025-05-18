@@ -16,7 +16,7 @@ class Map():
     names:dict[str,str]
     textures:dict[str,str]
     sounds:dict[str,str]
-    allowed_caracters:Final[tuple[str,...]] = (""," ","=","-","x","£","E","*","^","|","S","o","v","8","→","↑","←","↓")
+    allowed_caracters:Final[tuple[str,...]] = (""," ","=","-","x","£","E","*","^","|","p","S","o","v","8","→","↑","←","↓")
 
     def __init__(self) -> None:
         self.MapString = []

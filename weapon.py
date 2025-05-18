@@ -1,6 +1,7 @@
 import arcade
 import math
 from enum import IntEnum, auto
+from arcade import Sprite, SpriteList, SpriteSequence
 
 ARROW_BASE_SPEED = 20
 ARROW_GRAVITY = 0.5
@@ -8,24 +9,22 @@ ARROW_GRAVITY = 0.5
 TRUE_SCALE = 0.5
 RELATIVE_SCALE = 0.7*TRUE_SCALE
 
-class Weapon:
+class Weapon(Sprite):
     """
     Abstract class for the weapons
     Refer to ``Sword``, ``Bow`` and ``Arrow`` for actual use
     """
-    weapon_sprite: arcade.Sprite
+    weapon_sprite:Sprite
     texture:arcade.Texture
-    scale:float
     aiming_position:tuple[float|int,float|int]
     offset_position:tuple[float|int,float|int]
     offset_angle:int
     offset_sprite_angle:float
 
-    def __init__(self, player_position:tuple[float|int,float|int],relative_to_player:tuple[float|int,float|int], scale:float=1)->None:
+    def __init__(self, player_position:tuple[float|int,float|int],relative_to_player:tuple[float|int,float|int], texture:str, scale:float=1)->None:
         """
         Aims the weapon with the given parameters
         """
-        self.scale = scale
 
         # Aim the weapon
         vect_player_click_x = relative_to_player[0] -player_position[0] - self.offset_position[0]
@@ -33,24 +32,19 @@ class Weapon:
         self.aiming_position = (vect_player_click_x,vect_player_click_y)
 
         weapon_angle = math.atan2(self.aiming_position[1],self.aiming_position[0])
-        self.weapon_sprite = arcade.Sprite(self.texture,
-                                          center_x=player_position[0] + self.scale*(self.offset_position[0] + math.cos(self.offset_sprite_angle-weapon_angle)*self.offset_angle),
-                                          center_y=player_position[1] + self.scale*(self.offset_position[1] + math.sin(self.offset_sprite_angle-weapon_angle)*self.offset_angle),
-                                           scale=RELATIVE_SCALE*self.scale)
-        self.weapon_sprite.radians = self.offset_sprite_angle-weapon_angle
+        super().__init__(texture,scale=RELATIVE_SCALE*scale,
+                        center_x=player_position[0] + scale*(self.offset_position[0] + math.cos(self.offset_sprite_angle-weapon_angle)*self.offset_angle),
+                        center_y=player_position[1] + scale*(self.offset_position[1] + math.sin(self.offset_sprite_angle-weapon_angle)*self.offset_angle)
+                        )
+        self.radians = self.offset_sprite_angle-weapon_angle
 
     def move(self, position:tuple[float|int,float|int] = (0,0))->None:
         """
         Move the weapon according to the player's position
         """
         player_position = position
-        self.weapon_sprite.center_x=player_position[0] + self.scale*(self.offset_position[0] + math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle)
-        self.weapon_sprite.center_y=player_position[1] + self.scale*(self.offset_position[1] + math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)*self.offset_angle) 
-
-    def hit(self, collision_with:arcade.SpriteList[arcade.Sprite])->arcade.SpriteList[arcade.Sprite]:
-        hit:arcade.SpriteList[arcade.Sprite] = arcade.SpriteList(lazy=True)
-        hit.extend(arcade.check_for_collision_with_list(self.weapon_sprite,collision_with))
-        return hit
+        self.center_x=player_position[0] + self.scale[0]/RELATIVE_SCALE*(self.offset_position[0] + math.cos(self.offset_sprite_angle-self.radians)*self.offset_angle)
+        self.center_y=player_position[1] + self.scale[1]/RELATIVE_SCALE*(self.offset_position[1] + math.sin(self.offset_sprite_angle-self.radians)*self.offset_angle) 
 
 class Sword(Weapon):
     """
@@ -65,9 +59,9 @@ class Sword(Weapon):
         self.offset_position = (13,-22)
         self.offset_angle = 18
         self.offset_sprite_angle = math.pi/4
-        self.texture = arcade.load_texture("assets/kenney-voxel-items-png/sword_silver.png")
+        texture = "assets/kenney-voxel-items-png/sword_silver.png"
 
-        super().__init__(player_position,aiming_to, scale=scale)
+        super().__init__(player_position,aiming_to,texture, scale=scale,)
 
 class Bow(Weapon):
     """
@@ -82,9 +76,9 @@ class Bow(Weapon):
         self.offset_position = (13,-22)
         self.offset_angle = 0
         self.offset_sprite_angle = -math.pi/4
-        self.texture = arcade.load_texture("assets/kenney-voxel-items-png/bow.png")
+        texture = "assets/kenney-voxel-items-png/bow.png"
 
-        super().__init__(player_position,aiming_to,scale = scale)
+        super().__init__(player_position,aiming_to,texture,scale = scale)
         
 
 class Arrow(Weapon):
@@ -101,14 +95,14 @@ class Arrow(Weapon):
         self.offset_position = (13,-22)
         self.offset_angle = 0
         self.offset_sprite_angle = math.pi/4
-        self.texture = arcade.load_texture("assets/kenney-voxel-items-png/arrow.png")
+        texture = "assets/kenney-voxel-items-png/arrow.png"
 
-        super().__init__(player_position,aiming_to,scale=scale)
+        super().__init__(player_position,aiming_to,texture,scale=scale)
 
         Vector = ARROW_BASE_SPEED
 
-        self.weapon_sprite.change_x=Vector*math.cos(self.offset_sprite_angle-self.weapon_sprite.radians)
-        self.weapon_sprite.change_y=Vector*math.sin(self.offset_sprite_angle-self.weapon_sprite.radians)
+        self.change_x=Vector*math.cos(self.offset_sprite_angle-self.radians)
+        self.change_y=Vector*math.sin(self.offset_sprite_angle-self.radians)
 
     def move(self, position:tuple[float|int,float|int] = (0,0))->None:
         """
@@ -123,13 +117,12 @@ class Arrow(Weapon):
         It is up to the user to check if the sprite still exists or not
         !!
         """
-        self.weapon_sprite.position = (self.weapon_sprite.position[0]+self.weapon_sprite.change_x,self.weapon_sprite.position[1]+self.weapon_sprite.change_y)
-        self.weapon_sprite.change_y-=ARROW_GRAVITY
+        self.position = (self.position[0]+self.change_x,self.position[1]+self.change_y)
+        self.change_y-=ARROW_GRAVITY
 
-        if self.weapon_sprite.change_x!= 0: # makes sure that the arrow's angle can be calculated using the arctan() function
-            self.weapon_sprite.radians = self.offset_sprite_angle - math.atan2(self.weapon_sprite.change_y,self.weapon_sprite.change_x)
-        else:
-            self.weapon_sprite.radians = self.offset_sprite_angle
+        # makes sure that the arrow's angle can be calculated using the arctan() function
+        if self.change_x!= 0: self.radians = self.offset_sprite_angle - math.atan2(self.change_y,self.change_x)
+        else: self.radians = self.offset_sprite_angle
 
 class Weapon_index(IntEnum):
     """

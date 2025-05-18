@@ -1,24 +1,26 @@
 from enum import Enum, auto
 from typing import Final, Sequence
 from arcade import Sprite
+from subsprite import SubSprite
 
 class State(Enum):
     ON=auto()
     OFF=auto()
     DISABLED=auto()
 
-class Gate:
-    sprite:Sprite
-    position:Final[tuple[int,int]]
+class Gate(Sprite):
+    gate_position:Final[tuple[int,int]]
 
-    def __init__(self, sprite:Sprite,position:tuple[int,int], opened:bool = False)->None:
-        self.sprite = sprite
-        self.position = position
-        if opened: self.sprite.scale = (0,0)
+    def __init__(self, sprite:Sprite,gate_position:tuple[int,int], opened:bool = False)->None:
+        super().__init__(sprite.texture,scale=sprite.scale,
+                         center_x=sprite.center_x,
+                         center_y=sprite.center_y)
+        self.gate_position = gate_position
+        if opened: self.scale = (0,0)
 
     def set_state(self, opened:bool)->None:
-        if opened : self.sprite.scale = (0,0)
-        else: self.sprite.scale = (0.5,0.5)
+        if opened : self.scale = (0,0)
+        else: self.scale = (0.5,0.5)
 
 class Handle_Gate:
     gate:Gate
@@ -51,12 +53,12 @@ class Switch:
         for action in actions:
             match action['action']:
                 case 'open-gate':
-                    position = (int(action['x']),int(action['y']))
-                    gate = gates[position]
+                    gate_position = (int(action['x']),int(action['y']))
+                    gate = gates[gate_position]
                     self.actions[switch_to].append(Handle_Gate(gate,True))
                 case 'close-gate':
-                    position = (int(action['x']),int(action['y']))
-                    gate = gates[position]
+                    gate_position = (int(action['x']),int(action['y']))
+                    gate = gates[gate_position]
                     self.actions[switch_to].append(Handle_Gate(gate,False))
                 case 'disable': self.actions[switch_to].append(State.DISABLED)
 

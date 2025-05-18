@@ -10,6 +10,12 @@ lever: ":resources:/images/tiles/leverLeft.png"
 closed_lever: ":resources:/images/tiles/leverRight.png"
 gate: ":resources:/images/tiles/stoneCenter_rounded.png"
 
+portal: "assets/custom-assets/portal.png"
+portal_very_big: "assets/custom-assets/red_portal.png"
+portal_big: "assets/custom-assets/orange_portal.png"
+portal_small: "assets/custom-assets/green_portal.png"
+portal_very_small: "assets/custom-assets/blue_portal.png"
+
 player: ":resources:images/animated_characters/female_adventurer/femaleAdventurer_idle.png"
 
 slime: ":resources:images/enemies/slimeBlue.png"

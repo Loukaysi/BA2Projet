@@ -4,6 +4,7 @@ from enum import Enum, auto
 import math
 import random
 from map import Map
+from subsprite import SubSprite
 
 WALLS = ("full_grass","half_grass","box","gate")
 
@@ -15,21 +16,18 @@ SPRITE_SIZE = 64
 
 BAT_CIRCLE_SCOPE = 40
 
-class Monster:
+class Monster(SubSprite):
     """
     Abstract class to represent the different monsters : 
     ``Slime`` and ``Bat``
     """
-    monster_speed: int
-    monster_sprite: Sprite
-    initial_position: tuple[float|int,float|int]
 
+    def __init__(self,sprite:Sprite)->None:
+        super().__init__(sprite)
+        
     @abstractmethod
     def move(self)-> None:
         pass
-
-    def __del__(self)->None:
-        self.monster_sprite.kill()
 
 
 class Slime(Monster):
@@ -52,33 +50,35 @@ class Slime(Monster):
             distance += 1
         slime_sprite.boundary_left = slime_sprite.center_x - SPRITE_SIZE * (start-1) - slime_sprite.rect.width/4
         slime_sprite.boundary_right = slime_sprite.center_x + SPRITE_SIZE * (distance - start) + slime_sprite.rect.width/4
-        self.monster_sprite = slime_sprite
-        self.monster_speed = -1
+        super().__init__(slime_sprite)
+        self.change_x = -1
 
     def move(self)->None:
-        self.monster_sprite.strafe(self.monster_speed)
-        if isinstance(self.monster_sprite.boundary_right,float) and isinstance(self.monster_sprite.boundary_left,float):
-            if self.monster_sprite.center_x <= self.monster_sprite.boundary_left:
-                self.monster_speed = 1
-                self.monster_sprite.texture = self.monster_sprite.texture.flip_horizontally()
-            if self.monster_sprite.center_x >= self.monster_sprite.boundary_right:
-                self.monster_speed = -1
-                self.monster_sprite.texture = self.monster_sprite.texture.flip_horizontally()
+        self.update()
+        if isinstance(self.boundary_right,float) and isinstance(self.boundary_left,float):
+            if self.center_x <= self.boundary_left:
+                self.change_x = 1
+                self.texture = self.texture.flip_horizontally()
+            if self.center_x >= self.boundary_right:
+                self.change_x = -1
+                self.texture = self.texture.flip_horizontally()
 
 
 class Bat(Monster):
     """Deal with the bat movements"""
 
+    initial_position: tuple[float|int,float|int]
+
     def __init__(self, sprite: Sprite)-> None:
-        self.monster_sprite = sprite
+        super().__init__(sprite)
         self.initial_position = sprite.position
     
     def move(self) -> None:
         # define the relative position of bat from the initial position
-        relative_bat_position_x = self.monster_sprite.right - self.initial_position[0]
-        relative_bat_position_y = self.monster_sprite.bottom - self.initial_position[1]
+        relative_bat_position_x = self.right - self.initial_position[0]
+        relative_bat_position_y = self.bottom - self.initial_position[1]
         # define the angle of movement of the bat
-        move_angle = math.atan2(self.monster_sprite.change_y, self.monster_sprite.change_x) * 180 / math.pi
+        move_angle = math.atan2(self.change_y, self.change_x) * 180 / math.pi
         # find the relative angle between the speed orientation and the relative position
         relative_angle = math.atan2(relative_bat_position_x, relative_bat_position_y) - move_angle
         
@@ -88,23 +88,23 @@ class Bat(Monster):
             # turn the direction of movement if this is right
             move_angle += 3
             if (relative_angle) <= -90 and (relative_angle) >= 90 :
-                self.monster_sprite.angle += 3
+                self.angle += 3
         else :
             # Change the orientation of bat randomly with an angle between -5 and 5
             move_angle += random.uniform(-5, 5)
         # Change the speed of bat with a speed constant (=1) in its orientation
-        self.monster_sprite.change_y = math.sin(move_angle * math.pi / 180)*1
-        self.monster_sprite.change_x = math.cos(move_angle * math.pi / 180)*1
+        self.change_y = math.sin(move_angle * math.pi / 180)*1
+        self.change_x = math.cos(move_angle * math.pi / 180)*1
         # Change the position of bat
-        self.monster_sprite.center_x += self.monster_sprite.change_x*1
-        self.monster_sprite.center_y += self.monster_sprite.change_y*1
+        self.center_x += self.change_x*1
+        self.center_y += self.change_y*1
 
         # Change the orientation of the sprite randomly, between -10 and 10 degrees
-        self.monster_sprite.angle += random.uniform(-3, 3)
-        if (self.monster_sprite.angle < -10) :
-            self.monster_sprite.angle += random.uniform(0, 1)
-        if (self.monster_sprite.angle > 10) :
-            self.monster_sprite.angle += random.uniform(-1, 0)
+        self.angle += random.uniform(-3, 3)
+        if (self.angle < -10) :
+            self.angle += random.uniform(0, 1)
+        if (self.angle > 10) :
+            self.angle += random.uniform(-1, 0)
 
 class SPIDER_DIRECTION(Enum):
     RIGHT = auto()
@@ -122,7 +122,7 @@ class Spider(Monster):
     step: int = 0
 
     def __init__(self,spider_pos:position_int_type, game_map:Map, spider_sprite: Sprite)->None:
-        self.monster_sprite = spider_sprite
+        super().__init__(spider_sprite)
         self.__change_direction__(SPIDER_DIRECTION.RIGHT)
         self.path_sprite_pos = []
         self.path_map_pos = []
@@ -165,8 +165,8 @@ class Spider(Monster):
         return (abs(pos1[1]-pos2[1]) < SPIDER_SPEED and abs(pos1[0]-pos2[0]) < SPIDER_SPEED)
 
     def move(self)->None:
-        self.monster_sprite.update()
-        pos = (self.monster_sprite.center_x,self.monster_sprite.center_y)
+        self.update()
+        pos = (self.center_x,self.center_y)
         end = (self.path_sprite_pos[self.step][0][0],self.path_sprite_pos[self.step][0][1])
         if self.__close_enough__(pos,end):
             self.step = (self.step + 1) % len(self.path_sprite_pos)
@@ -204,7 +204,7 @@ class Spider(Monster):
             case SPIDER_DIRECTION.DOWN: return (pos[0],pos[1]-1)
 
     def __convert_to_coord__(self,pos:position_int_type,dir:SPIDER_DIRECTION, go_up:bool = True)->tuple[position_float_type,SPIDER_DIRECTION]:
-        dist_from_wall = self.monster_sprite.height/2
+        dist_from_wall = self.height/2
         up_factor = SPRITE_SIZE/2 - dist_from_wall
         if not go_up:up_factor = -up_factor
 
@@ -221,4 +221,4 @@ class Spider(Monster):
             case SPIDER_DIRECTION.UP: speed_and_angle =    (0,SPIDER_SPEED,-90)
             case SPIDER_DIRECTION.LEFT: speed_and_angle =  (-SPIDER_SPEED,0,180)
             case SPIDER_DIRECTION.DOWN: speed_and_angle =  (0,-SPIDER_SPEED,90)
-        (self.monster_sprite.change_x, self.monster_sprite.change_y, self.monster_sprite.angle) = speed_and_angle     
+        (self.change_x, self.change_y, self.angle) = speed_and_angle     

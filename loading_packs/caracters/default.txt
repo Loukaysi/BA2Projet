@@ -9,6 +9,8 @@
 "^": lever
 "|": gate
 
+"p": portal
+
 "S": player
 
 "o": slime
