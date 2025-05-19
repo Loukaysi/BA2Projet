@@ -10,5 +10,6 @@ class SubSprite(Sprite):
         self.change_y = sprite.change_y
         self.boundary_left = sprite.boundary_left
         self.boundary_right = sprite.boundary_right
-        self.boundary_left = sprite.boundary_left
-        self.boundary_right = sprite.boundary_right
+        self.boundary_top = sprite.boundary_top
+        self.boundary_bottom = sprite.boundary_bottom
+        self.textures = sprite.textures

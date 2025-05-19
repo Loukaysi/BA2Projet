@@ -1,7 +1,7 @@
 import arcade
 import math
 from enum import IntEnum, auto
-from arcade import Sprite, SpriteList, SpriteSequence
+from arcade import Sprite
 
 ARROW_BASE_SPEED = 20
 ARROW_GRAVITY = 0.5

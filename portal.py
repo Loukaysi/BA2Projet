@@ -1,6 +1,7 @@
 from arcade import Sprite
 from player import Player
 from enum import Enum,auto
+from subsprite import SubSprite
 
 size_values = tuple[float, float, float, float] # In order : gravity / size / jump_speed / horizontal_speed
 
@@ -21,13 +22,13 @@ class Size(Enum):
             case _: raise Exception("Error with the Size class, should not happen")
 
 
-class Portal():
-    sprite:Sprite
+class Portal(SubSprite):
     size_to:Size
 
 
     def __init__(self,sprite:Sprite,size:str)->None:
         self.sprite = sprite
+        super().__init__(sprite)
         match size:
             case "very_big": self.size_to = Size.VERY_BIG
             case "big": self.size_to = Size.BIG
@@ -37,8 +38,8 @@ class Portal():
 
     def resize_player(self,player:Player)->None:
         # Move the player to ensure that it doesn't hit the portal again
-        if player.sprite.center_x > self.sprite.center_x : player.sprite.center_x = self.sprite.left - 100
-        else: player.sprite.center_x = self.sprite.right + 100
+        if player.sprite.center_x > self.center_x : player.sprite.center_x = self.left - 100
+        else: player.sprite.center_x = self.right + 100
 
         if player.gravity == self.size_to.size_values()[0]:(gravity,scale,jump_speed,horizontal_speed) = Size.NORMAL.size_values()
         else: (gravity,scale,jump_speed,horizontal_speed) = self.size_to.size_values()

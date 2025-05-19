@@ -59,8 +59,8 @@ class Player:
             arrow.move()
             if arrow.position[1]< 0: self.__remove_arrow__(arrow)
 
-    def arrows_hit(self,collision_with:SpriteSequence[Sprite])->list[Sprite]:
-        total_hits:list[Sprite] = []
+    def arrows_hit[SubSprite:Sprite](self,collision_with:SpriteSequence[SubSprite])->list[SubSprite]:
+        total_hits:list[SubSprite] = []
         for arrow in self.arrow_list:
             arrow_hits = arcade.check_for_collision_with_list(arrow,collision_with)
             if len(arrow_hits) > 0: self.__remove_arrow__(arrow)
