@@ -18,13 +18,12 @@ class Size(Enum):
             case Size.BIG:return(2,1.5,25,8)
             case Size.NORMAL:return(1,1,20,5)
             case Size.SMALL:return(0.75,0.75,15,4)
-            case Size.VERY_BIG:return(0.5,0.5,10,4)
+            case Size.VERY_SMALL:return(0.5,0.5,10,4)
             case _: raise Exception("Error with the Size class, should not happen")
 
 
 class Portal(SubSprite):
     size_to:Size
-
 
     def __init__(self,sprite:Sprite,size:str)->None:
         self.sprite = sprite
@@ -40,11 +39,19 @@ class Portal(SubSprite):
         # Move the player to ensure that it doesn't hit the portal again
         if player.sprite.center_x > self.center_x : player.sprite.center_x = self.left - 100
         else: player.sprite.center_x = self.right + 100
-
-        if player.gravity == self.size_to.size_values()[0]:(gravity,scale,jump_speed,horizontal_speed) = Size.NORMAL.size_values()
+        
+        if self.__compare_values__(player):(gravity,scale,jump_speed,horizontal_speed) = Size.NORMAL.size_values()
         else: (gravity,scale,jump_speed,horizontal_speed) = self.size_to.size_values()
 
         player.gravity = gravity
         player.scale = scale
         player.jump_speed = jump_speed
         player.horizontal_speed = horizontal_speed
+
+    def __compare_values__(self,player:Player)->bool:
+        (gravity,scale,jump_speed,horizontal_speed) = self.size_to.size_values()
+        gravity_ok = gravity == player.gravity
+        scale_ok = scale == player.scale
+        jump_ok = jump_speed == player.jump_speed
+        horizontal_ok = horizontal_speed == player.horizontal_speed
+        return gravity_ok and scale_ok and jump_ok and horizontal_ok

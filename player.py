@@ -7,7 +7,7 @@ TRUE_SCALE = 0.5
 
 class Player:
     sprite:Sprite
-    scale:float
+    #scale:float
 
     active_weapon:Weapon_index
     weapon:Weapon
@@ -23,7 +23,7 @@ class Player:
 
     def __init__(self,scale:float=1,active_weapon:Weapon_index=Weapon_index.SWORD,
                  gravity:float=1,jump_speed:float=20,horizontal_speed:float=5,score:int=0)->None:
-        self.scale = scale
+        self.scalee = scale
         self.active_weapon = active_weapon
         self.gravity = gravity
         self.jump_speed = jump_speed
@@ -31,6 +31,15 @@ class Player:
         self.score = score
         self.sprites_to_draw = SpriteList(use_spatial_hash=True)
         self.arrow_list = []
+
+    @property
+    def scale(self)->float:
+        return self.scalee
+    
+    @scale.setter
+    def scale(self,scale:float)->None:
+        self.scalee = scale
+        if hasattr(self,'sprite'):self.sprite.scale = (scale*TRUE_SCALE,scale*TRUE_SCALE)
 
     def jump(self)->None:
         self.sprite.change_y = self.jump_speed
@@ -46,10 +55,10 @@ class Player:
 
     def create_weapon(self,relative_aim:tuple[float|int,float|int])->None:
         match self.active_weapon:
-            case Weapon_index.SWORD:self.weapon = Sword(self.sprite.position,relative_aim,scale=self.scale)
+            case Weapon_index.SWORD:self.weapon = Sword(self.sprite.position,relative_aim,scale=self.scalee)
             case Weapon_index.BOW:
-                self.weapon = Bow(self.sprite.position,relative_aim,scale=self.scale)
-                self.shoot_arrow(Arrow(self.sprite.position,relative_aim,scale=self.scale))
+                self.weapon = Bow(self.sprite.position,relative_aim,scale=self.scalee)
+                self.shoot_arrow(Arrow(self.sprite.position,relative_aim,scale=self.scalee))
         self.sprites_to_draw.append(self.weapon)
 
     def move_weapon(self)->None:
@@ -82,7 +91,7 @@ class Player:
 
     def assign_sprite(self,sprite:Sprite)->None:
         self.sprite = sprite
-        self.sprite.scale = (self.scale*TRUE_SCALE,self.scale*TRUE_SCALE)
+        self.sprite.scale = (self.scalee*TRUE_SCALE,self.scalee*TRUE_SCALE)
         self.sprites_to_draw.append(sprite)
 
     def draw(self)->None:
