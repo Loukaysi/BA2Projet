@@ -5,7 +5,7 @@ from enum import Enum, auto
 from map import Map
 
 TICK_PER_CASE = 200
-CHARACTERS_PLATEFORM = ("=","-","x","£","E","^")
+CHARACTERS_PLATEFORM = ("=","-","x","£","E","^","p")
 CHARACTERS_ARROW = ("→","↑","←","↓")
 
 class Side(Enum):

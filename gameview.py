@@ -381,7 +381,7 @@ class GameView(arcade.View):
                         actions = switch_on_actions.copy()
                         actions.extend(switch_off_actions)
 
-                        sprite.append_texture(arcade.load_texture(":resources:/images/tiles/leverRight.png"))
+                        sprite.append_texture(arcade.load_texture(self.game_map.textures["closed_lever"]))
                         new_switch = Switch(sprite, state = state, gates=gate_dict,
                                                        switch_off_actions=switch_off_actions,
                                                        switch_on_actions=switch_on_actions)
@@ -389,37 +389,21 @@ class GameView(arcade.View):
                         self.__replace_everywhere__("lever",(sprite,new_switch))
                         
     def load_portal(self)->None:
-        self.portal_list = SpriteList(use_spatial_hash=True)
-        pass
-        """
-        Initialise the ``Portal`` objects 
-        """
-        """self.portal_sprite_list = SpriteList(use_spatial_hash=True)
-        self.portal_list = []
-        portal_positions = self.game_map.FindElement(self.game_map.names["gate"])
-        portal_sprites = self.match_position_sprite(portal_positions)
-        gate_sprite_position = dict(zip(gate_positions,gate_sprites))
-        self.gate_dict = {}
+        if "portals" in self.game_map.config:
+            portals = self.game_map.config["portals"]
+            if isinstance(portals,list):
+                for portal in portals:
+                    if isinstance(portal, dict):
+                        if 'x' in portal and 'y' in portal:
+                            position = (int(portal['x']),int(portal['y']))
+                            sprite = self.match_position_sprite([position])[0]
+                        if 'size' in portal:
+                            size = portal['size']
 
-        if 'portals' in self.game_map.config:
-            gates = self.game_map.config['portals']
-            if isinstance(gates,list):
-                for gate in gates:
-                    position = (int(gate['x']), int(gate['y']))
-                    state_str:str = gate['state']
-                    opened:bool = False
-                    match state_str:
-                        case 'open': opened = True
-                        case 'closed': opened = False
-                    sprite = gate_sprite_position[position]
-                    self.gate_dict[position] = Gate(sprite,position,opened)
-                    self.gate_sprite_list.append(sprite)
-                    self.gate_list.append(self.gate_dict[position])
-        for pos,sprite in gate_sprite_position.items():
-            if sprite not in self.gate_sprite_list:
-                self.gate_sprite_list.append(sprite)
-                self.gate_dict[pos] = Gate(sprite,pos,False)
-                self.gate_list.append(self.gate_dict[pos])"""
+                        sprite.texture = arcade.load_texture(self.game_map.textures["portal_"+size])
+                        new_portal = Portal(sprite, size)
+
+                        self.__replace_everywhere__("portal",(sprite,new_portal))
 
     def load_physics(self)->None:
         """
@@ -453,7 +437,6 @@ class GameView(arcade.View):
     def __replace_everywhere__(self,type:str,old_new:tuple[Sprite,Sprite])->None:
         (old_sprite,new_sprite) = old_new
         for list_to_check in self.sprite_goto[type]:
-            if type == "lever":print(self.sprite_goto["lever"][1]==self.plateform_permeable_sprite_list)
             if isinstance(list_to_check,SpriteList) :
                 if list_to_check == self.plateform_permeable_sprite_list or list_to_check == self.plateform_solid_sprite_list or list_to_check == self.wall_sprite_list:
                     if old_sprite in list_to_check: 
@@ -576,6 +559,7 @@ class GameView(arcade.View):
 
         self.collision_with_coin()
         self.collision_with_lava()
+        self.collision_with_portal()
         self.collisions_with_exit()
         self.collisions_with_monster() 
 
@@ -649,6 +633,10 @@ class GameView(arcade.View):
         """
         if len(arcade.check_for_collision_with_list(self.player.sprite, self.no_go_sprite_list)) != 0:
             self.game_over()
+
+    def collision_with_portal(self)->None:
+        for portal in arcade.check_for_collision_with_list(self.player.sprite,self.portal_list):
+            portal.resize_player(self.player)
 
     def collisions_with_exit(self)->None:
         """

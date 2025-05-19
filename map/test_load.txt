@@ -37,9 +37,9 @@ gates:
     state: open # this gate is open when the game starts
   # the other gates start closed
 portals:
-  - x: 10
+  - x: 11
     y: 4
-    size: very_small
+    size: very_big
 ---
 ^S    x ↑  =    v x
 --    £ ^→ -      x→
