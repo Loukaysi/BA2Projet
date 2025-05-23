@@ -14,11 +14,13 @@ class Size(Enum):
 
     def size_values(self)->size_values:
         match self: # Handpicked values, not meant to represent anything
-            case Size.VERY_BIG:return(3,2,30,10)
-            case Size.BIG:return(2,1.5,25,8)
-            case Size.NORMAL:return(1,1,20,5)
-            case Size.SMALL:return(0.75,0.75,15,4)
-            case Size.VERY_SMALL:return(0.5,0.5,10,4)
+            # In order : gravity / size / jump_speed / horizontal_speed
+            # And of course as we all know, falling speed is directly proportiannal to mass
+            case Size.VERY_BIG:return(0.5,2,18,4)
+            case Size.BIG:return(0.75,1.5,18,5)
+            case Size.NORMAL:return(1,1,20,6)
+            case Size.SMALL:return(0.4,0.75,9,8)
+            case Size.VERY_SMALL:return(0.3,0.5,7,10)
             case _: raise Exception("Error with the Size class, should not happen")
 
 

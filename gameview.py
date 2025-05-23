@@ -23,7 +23,7 @@ PLAYER_GRAVITY = 1
 PLAYER_JUMP_SPEED = 21
 # Instant vertical speed for jumping, in pixels per frame.
 
-DISTANCE_FROM_UPPER_CAM = 300   
+DISTANCE_FROM_UPPER_CAM = 100   
 DISTANCE_FROM_LOWER_CAM = 200   
 DISTANCE_FROM_RIGHT_CAM = 10    
 DISTANCE_FROM_LEFT_CAM = 200    
@@ -117,7 +117,7 @@ class GameView(arcade.View):
         self.text_score = arcade.Text(f"coins : {self.player.score}",x=5,y=self.camera.height-30,color=arcade.color.RED_ORANGE,font_size=25)
         self.text_error = arcade.Text(self.error_message,x=30,y=self.camera.height/3*2,color=arcade.color.RED_DEVIL,font_size=25)
 
-        self.choose_map("test_load.txt")
+        self.choose_map("all_out_map.txt")
 
     def choose_map(self, chosen_map:str)-> None:
         # Initialize the map
@@ -212,7 +212,7 @@ class GameView(arcade.View):
         self.load_element_in_list("player",player_sprite_list)
         if len(player_sprite_list)!= 1:
             raise Exception(f"There are {len(player_sprite_list)} players (caracter : S) on the map instead of 1")
-        self.player.assign_sprite(player_sprite_list[0])
+        self.player.sprite = player_sprite_list[0]
         self.display_map_sprite_list.remove(self.player.sprite) # Let the player handle itself       
 
     def load_plateform(self)->None:
@@ -377,15 +377,15 @@ class GameView(arcade.View):
                         switch_on_actions = []
                         if 'switch_on' in switch:
                             switch_on_actions = switch['switch_on']
-
+                        
                         actions = switch_on_actions.copy()
                         actions.extend(switch_off_actions)
-
+                        
                         sprite.append_texture(arcade.load_texture(self.game_map.textures["closed_lever"]))
                         new_switch = Switch(sprite, state = state, gates=gate_dict,
                                                        switch_off_actions=switch_off_actions,
                                                        switch_on_actions=switch_on_actions)
-
+    
                         self.__replace_everywhere__("lever",(sprite,new_switch))
                         
     def load_portal(self)->None:
@@ -506,11 +506,11 @@ class GameView(arcade.View):
                 if self.player.active_weapon == Weapon_index.SWORD:
                     # check to kill monsters
                     Monster_Touched : list[Monster]
-                    Monster_Touched = arcade.check_for_collision_with_list(self.player.weapon, self.monster_list)
+                    Monster_Touched = self.player.weapon_hit(self.monster_list)
                     self.kill_monster(Monster_Touched)
 
                     Switch_Touched: list[Switch]
-                    Switch_Touched = arcade.check_for_collision_with_list(self.player.weapon, self.switch_list)
+                    Switch_Touched = self.player.weapon_hit(self.switch_list)
                     self.trigger_switch(Switch_Touched)
 
             case arcade.MOUSE_BUTTON_RIGHT:
@@ -526,12 +526,7 @@ class GameView(arcade.View):
         self.held_keys.discard(button)
         
         match button:
-            case arcade.MOUSE_BUTTON_LEFT:
-                try:
-                    self.player.weapon.kill()
-                    del self.player.weapon
-                except:
-                    pass
+            case arcade.MOUSE_BUTTON_LEFT:self.player.remove_weapon()
 
     def on_update(self, delta_time: float) -> None:
         """Called once per frame, before drawing.
@@ -598,6 +593,7 @@ class GameView(arcade.View):
         """
         self.player.move_weapon()
 
+
         # Check if the arrows hit anything and act accordingly
         self.player.arrows_hit(self.wall_sprite_list)
         self.player.arrows_hit(self.plateform_solid_sprite_list)
@@ -637,6 +633,7 @@ class GameView(arcade.View):
     def collision_with_portal(self)->None:
         for portal in arcade.check_for_collision_with_list(self.player.sprite,self.portal_list):
             portal.resize_player(self.player)
+            self.physics_engine.gravity_constant = self.player.gravity
 
     def collisions_with_exit(self)->None:
         """

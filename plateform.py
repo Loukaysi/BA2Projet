@@ -1,10 +1,8 @@
-from __future__ import annotations
-
+from dataclasses import dataclass
 from typing import Final
 from enum import Enum, auto
 from map import Map
 
-TICK_PER_CASE = 200
 CHARACTERS_PLATEFORM = ("=","-","x","£","E","^","p")
 CHARACTERS_ARROW = ("→","↑","←","↓")
 
@@ -35,16 +33,11 @@ class Characters(Enum):
     OTHER=auto()
     UNKNOWN=auto()
 
+@dataclass(frozen=True)
 class Plateform:
-
-    blocs:Final[list[tuple[int,int]]]
-    pos_max:Final[tuple[int,int]]
-    pos_start:Final[tuple[int,int]]
-
-    def __init__(self,blocs:list[tuple[int,int]],max_steps:tuple[int,int],current_steps:tuple[int,int])->None:
-        self.blocs = blocs
-        self.pos_max = max_steps
-        self.pos_start = current_steps
+    blocs:list[tuple[int,int]]
+    pos_max:tuple[int,int]
+    pos_start:tuple[int,int]
 
 def create_plateforms(game_map:Map)->list[Plateform]:
     plateform_list:list[Plateform] = []
@@ -96,7 +89,7 @@ def plateform_limit(game_map:Map, bloc_list:list[tuple[int,int]], max_dist:dict[
                 max_dist[side]=1
             else:
                 max_dist[side]+=1
-            if look_around_side(game_map,current_pos,side) in CHARACTERS_ARROW:
+            if look_around_side(game_map,current_pos,side) == current_caracter:
                 return plateform_limit(game_map,bloc_list,max_dist,current_map,pos_at_side(current_pos,side))
     else:
         if current_caracter != "":

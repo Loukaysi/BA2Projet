@@ -143,7 +143,7 @@ class Spider(Monster):
             current_pos = self.__move_to__(current_pos,direction)
 
         if len(self.path_map_pos) > 0:
-            if current_pos == self.path_map_pos[0][0]: return (True,new_dir)
+            if current_pos == self.path_map_pos[0][0] and direction == SPIDER_DIRECTION.RIGHT: return (True,new_dir)
         self.path_map_pos.append((current_pos,direction))
         return (False,new_dir)
 

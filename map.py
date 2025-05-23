@@ -61,7 +61,7 @@ class Map():
             self.config=yaml.safe_load(map_config_yaml)
             
             self.Read_design(map_design)
-
+            
             return True
         except:
             return False
