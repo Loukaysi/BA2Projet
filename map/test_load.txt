@@ -39,7 +39,7 @@ gates:
 portals:
   - x: 12
     y: 4
-    size: very_small
+    size: very_big
 ---
 ^S    x ↑  =      x
 --    £ ^→ -      x→
