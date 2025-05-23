@@ -191,7 +191,7 @@ class GameView(arcade.View):
                                                     for line_number,line in enumerate(self.game_map.MapString )
                                                     for caracter_number, caracter in enumerate(line)
                                                     if caracter in self.game_map.caracters])
-    # Probablement faire une fonction qui charge le bon type de sprite en fonction du caractère
+    
     def load_sounds(self) -> None:
         """
         Load the wanted sounds for the current map (sounds may be customised using packs)
@@ -544,6 +544,7 @@ class GameView(arcade.View):
         self.profiler.disable()
 
     def do_on_update(self, delta_time: float)->None:
+        
         # Act according to the pressed keys
         for key in self.held_keys:
             match key:
@@ -551,7 +552,6 @@ class GameView(arcade.View):
                 case arcade.key.LEFT: self.player.move_left()
 
         self.physics_engine.update()
-
         self.move_fake_plateforms()
         self.move_camera()
         self.move_weapons()
