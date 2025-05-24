@@ -1,6 +1,15 @@
 from arcade import Sprite
 
 class SubSprite(Sprite):
+    """
+    Subclass of Sprite to avoid the "sub object of an object cannot be transformed into sub object" problem
+
+    I.e. this class should only be used for the `init` method which takes a sprite and creates an exact copy of the sprite to then be extended to have more attributes
+
+    
+    required librabry
+        `arcade`
+    """
     def __init__(self,sprite:Sprite)->None:
         super().__init__(sprite.texture)
         self.scale = sprite.scale

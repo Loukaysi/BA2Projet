@@ -1,17 +1,15 @@
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Final, Sequence
 from arcade import Sprite
 from subsprite import SubSprite
-
-class State(Enum):
-    ON=auto()
-    OFF=auto()
-    DISABLED=auto()
+from common_types import pos_int
 
 class Gate(SubSprite):
-    gate_position:Final[tuple[int,int]]
-
-    def __init__(self, sprite:Sprite,gate_position:tuple[int,int], opened:bool = False)->None:
+    
+    gate_position:Final[pos_int]
+    
+    def __init__(self, sprite:Sprite,gate_position:pos_int, opened:bool = False)->None:
         super().__init__(sprite)
         self.gate_position = gate_position
         if opened: self.scale = (0,0)
@@ -20,13 +18,15 @@ class Gate(SubSprite):
         if opened : self.scale = (0,0)
         else: self.scale = (0.5,0.5)
 
+@dataclass
 class Handle_Gate:
     gate:Gate
     open:bool
 
-    def __init__(self,gate:Gate,open:bool)->None:
-        self.gate = gate
-        self.open = open
+class State(Enum):
+    ON=auto()
+    OFF=auto()
+    DISABLED=auto()
 
 Raw_Action_type = dict[str,str|int]
 Action = State | Handle_Gate
@@ -35,8 +35,8 @@ class Switch(SubSprite):
     state:State = State.OFF
     actions: dict[State,list[Action]]
 
-    def __init__(self,sprite:Sprite,state:bool=False, gates:dict[tuple[int,int],Gate] = {},
-                 switch_on_actions:list[Raw_Action_type]=[],switch_off_actions:list[Raw_Action_type]=[])->None:
+    def __init__(self,sprite:Sprite,state:bool=False, gates:dict[pos_int,Gate] = {},
+                 switch_on_actions:Sequence[Raw_Action_type]=[],switch_off_actions:Sequence[Raw_Action_type]=[])->None:
         if state:
             self.state = State.ON
         else:
@@ -46,7 +46,7 @@ class Switch(SubSprite):
         self.read_actions(switch_off_actions,State.OFF,gates)
         self.read_actions(switch_on_actions,State.ON,gates)
 
-    def read_actions(self,actions:list[Raw_Action_type], switch_to:State, gates:dict[tuple[int,int],Gate]={})->None:
+    def read_actions(self,actions:Sequence[Raw_Action_type], switch_to:State, gates:dict[pos_int,Gate]={})->None:
         for action in actions:
             match action['action']:
                 case 'open-gate':

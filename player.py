@@ -3,6 +3,8 @@ from weapon import Weapon, Weapon_index
 from weapon import Sword, Bow, Arrow
 import arcade
 
+from common_types import pos_float_int
+
 TRUE_SCALE = 0.5 # Reference for the scale
 
 class Player:
@@ -17,20 +19,19 @@ class Player:
 
     list of attributes
 
-    ``active_weapon`` : uses the ``Weapon`` class, does not have to be referenced outside in anyways, the weapon is 
-    toggled by `toggle_weapon` so it switches between `Sword` and `Bow` types
+    ``active_weapon`` type (`Weapon`) : does not have to be referenced outside in anyways, the weapon is toggled by `toggle_weapon` so it switches between `Sword` and `Bow` types
 
-    `scale` : used to scale everything (mainly the Weapons) to the size of the player
+    `scale` type (`float`) : used to scale everything (mainly the Weapons) to the size of the player
 
-    `gravity` : storing the gravity assigned to a ``Player`` object, not used in this class
-    should be used with ``arcade``'s `PhysicsEngine`
+    `gravity` type (`float`) : storing the gravity assigned to a ``Player`` object, not used in this classshould be used with ``arcade``'s `PhysicsEngine`
 
-    `jump_speed` : used to set the vertical speed upon using the `jump` method
+    `jump_speed` type (`float`) : used to set the vertical speed upon using the `jump` method
 
-    `horizontal_speed` : used to set the horizontal_speed upon using the 'move_right' or `move_left` method
+    `horizontal_speed` type (`float`) : used to set the horizontal_speed upon using the 'move_right' or `move_left` method
 
     required files
         `weapon.py`
+        `common_types.py`
 
     required librabry
         `arcade`
@@ -110,7 +111,7 @@ class Player:
         """
         self.__sprite.change_x = -self.horizontal_speed
 
-    def create_weapon(self,relative_aim:tuple[float|int,float|int])->None:
+    def create_weapon(self,relative_aim:pos_float_int)->None:
         """
         creates the weapon assigned to `current_weapon`
 
@@ -132,6 +133,8 @@ class Player:
         this method should be called every time the player moves but it is up to the user to decide 
 
         Please refer to `Weapon.move` for any insight on the movement of the weapons
+
+        Note : any arrow that has a negative y coordinate is automatically deleted
         """
         # check if the weapon exists before moving it
         if hasattr(self,'_Player__weapon') : self.__weapon.move(position=self.__sprite.position)

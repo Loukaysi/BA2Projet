@@ -166,7 +166,7 @@ class GameView(arcade.View):
         "exit":(self.exit_sprite_list,self.display_map_sprite_list,self.plateform_permeable_sprite_list),
         "coin":(self.coin_sprite_list,self.display_map_sprite_list),
         "lever":(self.switch_list,self.plateform_permeable_sprite_list,self.display_map_sprite_list),
-        "gate":(self.gate_list,self.display_map_sprite_list),
+        "gate":(self.gate_list,self.display_map_sprite_list,self.wall_sprite_list),
         "portal":(self.portal_list,self.plateform_permeable_sprite_list,self.display_map_sprite_list),
         "player":(),
         "slime":(self.monster_list,self.display_map_sprite_list),
@@ -539,7 +539,6 @@ class GameView(arcade.View):
         self.profiler.disable()
 
     def do_on_update(self, delta_time: float)->None:
-        
         # Act according to the pressed keys
         for key in self.held_keys:
             match key:
@@ -666,8 +665,10 @@ class GameView(arcade.View):
         """
         Trigger the given switches 
         """
-        for switch in switches:
-            switch.trigger_actions()
+        if switches:
+            for switch in switches:
+                switch.trigger_actions()
+            self.load_physics()
 
     def game_over(self)->None:
         """

@@ -57,11 +57,11 @@ class Map():
                     map_design.append(Remove_from(line))
             
             map_config_yaml = "\n".join(map_config)
-
+            
             self.config=yaml.safe_load(map_config_yaml)
             
             self.Read_design(map_design)
-            
+
             return True
         except:
             return False
