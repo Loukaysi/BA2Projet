@@ -5,6 +5,7 @@ import math
 import random
 from map import Map
 from subsprite import SubSprite
+from common_types import pos_float_int, pos_int, pos_float
 
 WALLS = ("full_grass","half_grass","box","gate")
 
@@ -79,14 +80,14 @@ class Slime(Monster):
         check `Monster` for the required libraries
     """
 
-    def __init__(self, slime_pos:tuple[int,int], game_map:Map, slime_sprite: Sprite)-> None:
+    def __init__(self, slime_pos:pos_int, game_map:Map, slime_sprite: Sprite)-> None:
         """
         Sets the future path of the slime based on the map 
 
         If the slime is not on a walkable surface this method raises an `Exception` that should be catched outisde
 
         To find the actual path the slime should take, we first go to the furthest left position that is still walkable and then count
-        the steps going right to have the actual lenght of the path
+        the __steps going right to have the actual lenght of the path
 
         Note : the limites are based on the center of the sprite, they should not be used as outside references
         """
@@ -101,12 +102,12 @@ class Slime(Monster):
             check_pos_x -= 1
             start += 1
         check_pos_x+=1
-        # Go far right while counting the steps
+        # Go far right while counting the __steps
         while (game_map.caracters.get(game_map.ShowPosition((check_pos_x,check_y-1)),"") in SLIME_CAN_GO
                 and game_map.caracters.get(game_map.ShowPosition((check_pos_x,check_y)),"") not in WALLS):
             check_pos_x += 1
             distance += 1
-        # Set the boundaries based on the steps
+        # Set the boundaries based on the __steps
         slime_sprite.boundary_left = slime_sprite.center_x - SPRITE_SIZE * (start-1) - slime_sprite.rect.width/4
         slime_sprite.boundary_right = slime_sprite.center_x + SPRITE_SIZE * (distance - start) + slime_sprite.rect.width/4
         super().__init__(slime_sprite)
@@ -136,7 +137,7 @@ class Bat(Monster):
 
     list of attributes
 
-        `initial_position`
+        `initial_position` the center of the sprite around which the bat will move
 
     required files
         check `Monster` for the required imports
@@ -145,7 +146,7 @@ class Bat(Monster):
         check `Monster` for the required libraries
     """
 
-    __initial_position: tuple[float|int,float|int]
+    __initial_position: pos_float_int
 
     def __init__(self, sprite: Sprite)-> None:
         """
@@ -191,31 +192,60 @@ class Bat(Monster):
             self.angle += random.uniform(-1, 0)
 
 class SPIDER_DIRECTION(Enum):
+    """
+    Class used as a way to represent the different directions to map out the path of the spider
+    """
     RIGHT = auto()
     UP = auto()
     LEFT = auto()
     DOWN = auto()
-
-position_float_type = tuple[float,float]
-position_int_type = tuple[int,int]
+    
 
 class Spider(Monster):
+    """ 
+    Defines the movement of the `Spider` to "follow the perimeter of the shape it is standing on"
 
-    path_sprite_pos:list[tuple[position_float_type,SPIDER_DIRECTION]] # final x coord, final y coord, direction until final coord
-    path_map_pos:list[tuple[position_int_type,SPIDER_DIRECTION]]
-    step: int = 0
+    The entire path is decided upon initialisation then the movement is handled by the `move()` function entirely (it still needs to be called manually)
 
-    def __init__(self,spider_pos:position_int_type, game_map:Map, spider_sprite: Sprite)->None:
+    The list of blocs which the spiders can stand on is defined in `SPIDER_CAN_GO`, every other bloc is considered "air" 
+    
+    It is important to note that the spiders will simply go through the gates even tho they bloc the player, this is because handling the fact the the gates
+    may disappear overtime would require checking for solid sprites around the spider every tick which would be a huge loss of performance
+    The other solution would be to make the gates "walkable" for the spider but this would also be weird when the gate disapperas however it can be changed easily
+    by adding "gate" to the `SPIDER_CAN_GO` argument from this file
+
+    Note : As a conscious decision, the spiders should not spawn on plateforms (as handling this would be too complicated for this project)
+
+    list of attributes
+
+        `path_sprite`
+
+    required files
+        check `Monster` for the required imports
+
+    required librabry
+        check `Monster` for the required libraries
+    """
+    __path_sprite_pos:list[tuple[pos_float,SPIDER_DIRECTION]] # final x coord, final y coord, direction until final coord
+    __path_map_pos:list[tuple[pos_int,SPIDER_DIRECTION]]
+    __step: int = 0
+
+    def __init__(self,spider_pos:pos_int, game_map:Map, spider_sprite: Sprite)->None:
+        """
+        
+        """
+        if game_map.caracters.get(game_map.ShowPosition((spider_pos[0],spider_pos[1]-1)),"") not in SPIDER_CAN_GO: 
+            raise Exception (f"The spider with coordinates {spider_pos} didn't start on a walkable space")
         super().__init__(spider_sprite)
         self.__change_direction__(SPIDER_DIRECTION.RIGHT)
-        self.path_sprite_pos = []
-        self.path_map_pos = []
+        self.__path_sprite_pos = []
+        self.__path_map_pos = []
         (path_over,direction) = self.__continue_path__(spider_pos,SPIDER_DIRECTION.RIGHT,game_map)
         while not path_over :
-            (path_over,direction)=self.__continue_path__(self.path_map_pos[-1][0],direction,game_map)
+            (path_over,direction)=self.__continue_path__(self.__path_map_pos[-1][0],direction,game_map)
         self.__build_path_coord__()
 
-    def __continue_path__(self,pos:position_int_type,direction:SPIDER_DIRECTION,map:Map)->tuple[bool,SPIDER_DIRECTION]:
+    def __continue_path__(self,pos:pos_int,direction:SPIDER_DIRECTION,map:Map)->tuple[bool,SPIDER_DIRECTION]:
         current_pos = pos
         while not self.__bloc_in_front__(current_pos,direction,map,False) and self.__bloc_in_front__(current_pos,direction,map,True):
             current_pos = self.__move_to__(current_pos,direction)
@@ -226,12 +256,12 @@ class Spider(Monster):
             new_dir = self.__perp__(direction,up = False)
             current_pos = self.__move_to__(current_pos,direction)
 
-        if len(self.path_map_pos) > 0:
-            if current_pos == self.path_map_pos[0][0] and direction == SPIDER_DIRECTION.RIGHT: return (True,new_dir)
-        self.path_map_pos.append((current_pos,direction))
+        if len(self.__path_map_pos) > 0:
+            if current_pos == self.__path_map_pos[0][0] and direction == SPIDER_DIRECTION.RIGHT: return (True,new_dir)
+        self.__path_map_pos.append((current_pos,direction))
         return (False,new_dir)
 
-    def __bloc_in_front__(self,pos:position_int_type,dir:SPIDER_DIRECTION ,map:Map, bellow:bool)->bool:
+    def __bloc_in_front__(self,pos:pos_int,dir:SPIDER_DIRECTION ,map:Map, bellow:bool)->bool:
         if bellow:offset = -1
         else: offset = 0
 
@@ -245,23 +275,23 @@ class Spider(Monster):
             if map.caracters[map.ShowPosition(need_to_look)] in SPIDER_CAN_GO: return True
         return False
 
-    def __close_enough__(self,pos1:position_float_type, pos2:position_float_type)->bool:
+    def __close_enough__(self,pos1:pos_float, pos2:pos_float)->bool:
         return (abs(pos1[1]-pos2[1]) < SPIDER_SPEED and abs(pos1[0]-pos2[0]) < SPIDER_SPEED)
 
     def move(self)->None:
         self.update()
         pos = (self.center_x,self.center_y)
-        end = (self.path_sprite_pos[self.step][0][0],self.path_sprite_pos[self.step][0][1])
+        end = (self.__path_sprite_pos[self.__step][0][0],self.__path_sprite_pos[self.__step][0][1])
         if self.__close_enough__(pos,end):
-            self.step = (self.step + 1) % len(self.path_sprite_pos)
-            self.__change_direction__(self.path_sprite_pos[self.step][1])
+            self.__step = (self.__step + 1) % len(self.__path_sprite_pos)
+            self.__change_direction__(self.__path_sprite_pos[self.__step][1])
 
     def __build_path_coord__(self)->None:
-        segment_amount = len(self.path_map_pos)
+        segment_amount = len(self.__path_map_pos)
         for i in range(segment_amount):
-            segment = self.path_map_pos[i]
-            self.path_sprite_pos.append(self.__convert_to_coord__(
-                segment[0],segment[1],self.__is_perp__(segment[1],self.path_map_pos[(i+1)%segment_amount][1])))
+            segment = self.__path_map_pos[i]
+            self.__path_sprite_pos.append(self.__convert_to_coord__(
+                segment[0],segment[1],self.__is_perp__(segment[1],self.__path_map_pos[(i+1)%segment_amount][1])))
 
     def __perp__(self,dir:SPIDER_DIRECTION,up:bool=True)->SPIDER_DIRECTION:
         if up:
@@ -280,14 +310,14 @@ class Spider(Monster):
     def __is_perp__(self,dir:SPIDER_DIRECTION,dir_to_check:SPIDER_DIRECTION,up:bool=True)->bool:
         return dir_to_check == self.__perp__(dir,up=up)        
 
-    def __move_to__(self,pos:position_int_type,dir:SPIDER_DIRECTION)->position_int_type:
+    def __move_to__(self,pos:pos_int,dir:SPIDER_DIRECTION)->pos_int:
         match dir:
             case SPIDER_DIRECTION.RIGHT: return(pos[0]+1,pos[1])
             case SPIDER_DIRECTION.UP: return (pos[0],pos[1]+1)
             case SPIDER_DIRECTION.LEFT: return (pos[0]-1,pos[1])
             case SPIDER_DIRECTION.DOWN: return (pos[0],pos[1]-1)
 
-    def __convert_to_coord__(self,pos:position_int_type,dir:SPIDER_DIRECTION, go_up:bool = True)->tuple[position_float_type,SPIDER_DIRECTION]:
+    def __convert_to_coord__(self,pos:pos_int,dir:SPIDER_DIRECTION, go_up:bool = True)->tuple[pos_float,SPIDER_DIRECTION]:
         dist_from_wall = self.height/2
         up_factor = SPRITE_SIZE/2 - dist_from_wall
         if not go_up:up_factor = -up_factor
