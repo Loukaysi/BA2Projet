@@ -32,6 +32,13 @@
 * [x] Luca : intégration des images et sons personnalisés
 * [x] Benoît : début du développement des éventuels futurs niveaux
 
+Les fichiers pas encore sucrés :
+gameview
+map
+monster
+plateform
+switch
+
 ---
 
 ## Suivi

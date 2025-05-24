@@ -28,7 +28,6 @@ switches:
     y: 31
     state: on
     switch_on:
-      - action: disable
       - action: open-gate
         x: 17 
         y: 31
@@ -38,6 +37,7 @@ switches:
       - action: open-gate
         x: 17
         y: 33
+      - action: disable
     switch_off:
       - action: close-gate
         x: 17

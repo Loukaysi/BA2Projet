@@ -34,12 +34,12 @@ class Weapon(Sprite):
         `offset_sprite_angle` type (`float`) : the offset needed for the weapon to be horizontal (i.e. if the sword is pointed upwards, it has an angle of pi/2)
 
     required files
-        `weapon.py`
         `common_typs`
 
     required librabry
         `arcade`
         `enum`
+        `math`
     """
     aiming_position:pos_float_int
     offset_position:pos_float_int

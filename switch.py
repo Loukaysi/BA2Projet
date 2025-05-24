@@ -43,8 +43,8 @@ class Switch(SubSprite):
             self.state = State.OFF
         super().__init__(sprite)
         self.actions = {State.ON:[State.OFF],State.OFF:[State.ON]}
-        self.read_actions(switch_off_actions,State.OFF,gates)
-        self.read_actions(switch_on_actions,State.ON,gates)
+        self.read_actions(switch_on_actions,State.OFF,gates)
+        self.read_actions(switch_off_actions,State.ON,gates)
 
     def read_actions(self,actions:Sequence[Raw_Action_type], switch_to:State, gates:dict[pos_int,Gate]={})->None:
         for action in actions:

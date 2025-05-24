@@ -18,42 +18,106 @@ BAT_CIRCLE_SCOPE = 40
 
 class Monster(SubSprite):
     """
-    Abstract class to represent the different monsters : 
-    ``Slime`` and ``Bat``
+    Abstract method to represent the three types of monsters (`Spider`, `Slime` and `Bat`) 
+
+    The movement of every monster is defined in the three subclasses with the `move` method, however, this menthod as to be called by the used on every monster
+    that is requiered to move 
+
+    It is worth noting that the `init` method calls to the `init` from `SubSprite` so it is used as a `super()__init__(sprite)` in the 3 subclasses
+
+    Note : Some attributes that are defined in `Sprite` are used as a way to "store" values, as such, they should not be used outside of this class
+
+    list of attributes
+
+        -
+
+    required files
+        `map.py`
+        `subsprite.py`
+
+    required librabry
+        `arcade`
+        `abc`
+        `enum`
+        `math`
+        `random`
+
     """
 
     def __init__(self,sprite:Sprite)->None:
+        """
+        Usual call to `SubSprite.init`
+        """
         super().__init__(sprite)
         
     @abstractmethod
     def move(self)-> None:
+        """
+        Defines the movement of every monster, check the definition of the subclasses (`Spider`,`Slime` and `Bat`) for more details
+        """
         pass
 
 
 class Slime(Monster):
     """
-    Monster type that moves while staying on the ground
+    Used to define the movements of the slimes
+
+    The slimes advance in the direction they are facing until they hit a wall or there is no more ground in front of them
+
+    The path of the slime is defined in the `init` method based stricly on the map
+
+    Check the parameters `SLIME_CAN_GO` and `WALLS` from this file to find out what is considered "walkable" for the slime
+
+    list of attributes
+
+        -
+
+    required files
+        check `Monster` for the required imports
+
+    required librabry
+        check `Monster` for the required libraries
     """
 
     def __init__(self, slime_pos:tuple[int,int], game_map:Map, slime_sprite: Sprite)-> None:
-        check_pos_x = slime_pos[0]
+        """
+        Sets the future path of the slime based on the map 
+
+        If the slime is not on a walkable surface this method raises an `Exception` that should be catched outisde
+
+        To find the actual path the slime should take, we first go to the furthest left position that is still walkable and then count
+        the steps going right to have the actual lenght of the path
+
+        Note : the limites are based on the center of the sprite, they should not be used as outside references
+        """
+        if game_map.caracters.get(game_map.ShowPosition((slime_pos[0],slime_pos[1]-1)),"") not in SLIME_CAN_GO: 
+            raise Exception (f"The slime with coordinates {slime_pos} didn't start on a walkable space")
+        (check_pos_x,check_y) = slime_pos
         distance = 0
         start = 0
-        while (game_map.caracters.get(game_map.ShowPosition((check_pos_x,slime_pos[1]-1)),"") in SLIME_CAN_GO
-                and game_map.caracters.get(game_map.ShowPosition((check_pos_x,slime_pos[1])),"") not in WALLS):
+        # Go far left
+        while (game_map.caracters.get(game_map.ShowPosition((check_pos_x,check_y-1)),"") in SLIME_CAN_GO
+                and game_map.caracters.get(game_map.ShowPosition((check_pos_x,check_y)),"") not in WALLS):
             check_pos_x -= 1
             start += 1
         check_pos_x+=1
-        while (game_map.caracters.get(game_map.ShowPosition((check_pos_x,slime_pos[1]-1)),"") in SLIME_CAN_GO
-                and game_map.caracters.get(game_map.ShowPosition((check_pos_x,slime_pos[1])),"") not in WALLS):
+        # Go far right while counting the steps
+        while (game_map.caracters.get(game_map.ShowPosition((check_pos_x,check_y-1)),"") in SLIME_CAN_GO
+                and game_map.caracters.get(game_map.ShowPosition((check_pos_x,check_y)),"") not in WALLS):
             check_pos_x += 1
             distance += 1
+        # Set the boundaries based on the steps
         slime_sprite.boundary_left = slime_sprite.center_x - SPRITE_SIZE * (start-1) - slime_sprite.rect.width/4
         slime_sprite.boundary_right = slime_sprite.center_x + SPRITE_SIZE * (distance - start) + slime_sprite.rect.width/4
         super().__init__(slime_sprite)
         self.change_x = -1
 
     def move(self)->None:
+        """
+        Moves the slime based on the path defined by `init` 
+
+        Note : The sprite is automatically rotated
+        """
         self.update()
         if isinstance(self.boundary_right,float) and isinstance(self.boundary_left,float):
             if self.center_x <= self.boundary_left:
@@ -65,18 +129,38 @@ class Slime(Monster):
 
 
 class Bat(Monster):
-    """Deal with the bat movements"""
+    """ 
+    Defines the movement of the `bat` to be a circle around the original position of the bat
 
-    initial_position: tuple[float|int,float|int]
+    Note : When the bat gets to the edge, it will "follow" a small circle to come back inside of the radius, as such, the `BAT_CIRCLE_SCOPE` should not be taken as a perfect mesurement for the actual max distance
+
+    list of attributes
+
+        `initial_position`
+
+    required files
+        check `Monster` for the required imports
+
+    required librabry
+        check `Monster` for the required libraries
+    """
+
+    __initial_position: tuple[float|int,float|int]
 
     def __init__(self, sprite: Sprite)-> None:
+        """
+        Standard initialisation
+        """
         super().__init__(sprite)
-        self.initial_position = sprite.position
+        self.__initial_position = sprite.position
     
     def move(self) -> None:
+        """
+        
+        """
         # define the relative position of bat from the initial position
-        relative_bat_position_x = self.right - self.initial_position[0]
-        relative_bat_position_y = self.bottom - self.initial_position[1]
+        relative_bat_position_x = self.right - self.__initial_position[0]
+        relative_bat_position_y = self.bottom - self.__initial_position[1]
         # define the angle of movement of the bat
         move_angle = math.atan2(self.change_y, self.change_x) * 180 / math.pi
         # find the relative angle between the speed orientation and the relative position
